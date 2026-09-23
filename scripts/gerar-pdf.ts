@@ -180,6 +180,17 @@ const css = `
     color: #9fd6c2;
     margin: 0 0 8px;
   }
+  .masthead .proto-link {
+    font-size: 9.5pt;
+    margin: 0 0 14px;
+  }
+  .masthead .proto-link a {
+    display: inline-block;
+    padding: 4px 6px;
+    color: #9fd6c2;
+    text-decoration: underline;
+    line-height: 1.35;
+  }
   .masthead h1 {
     font-family: Georgia, "Times New Roman", serif;
     font-weight: 700;
@@ -273,6 +284,7 @@ function buildHtml(body: string): string {
   <div class="doc">
     <header class="masthead">
       <p class="kicker">Hospeda Link</p>
+      <p class="proto-link"><a href="https://web-production-cc741.up.railway.app/">link do protótipo: https://web-production-cc741.up.railway.app/</a></p>
       <h1>Regras do negócio</h1>
       <div class="rule"></div>
       <p>Central de hospedagem corporativa em Jataí-GO. Como o negócio opera e como a ferramenta apoia a operação.</p>
