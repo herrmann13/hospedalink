@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
-import { serializeRequest } from "../../lib/serialize";
+import { serializeRequestDetail, serializeRequestList } from "../../lib/serialize";
 import { getCommissionRate } from "../../lib/protocol";
 import { requireAuth } from "../../middleware/auth";
 import { negotiationStatusSchema, requestStatusSchema } from "../../lib/statuses";
@@ -14,7 +14,7 @@ router.get("/", async (_req, res) => {
     include: { company: true },
     orderBy: { createdAt: "desc" },
   });
-  res.json({ requests: requests.map(serializeRequest) });
+  res.json({ requests: requests.map(serializeRequestList) });
 });
 
 router.get("/:id", async (req, res) => {
@@ -32,7 +32,7 @@ router.get("/:id", async (req, res) => {
     res.status(404).json({ error: "Solicitação não encontrada." });
     return;
   }
-  res.json({ request: serializeRequest(request) });
+  res.json({ request: serializeRequestDetail(request) });
 });
 
 const patchSchema = z.object({
@@ -53,8 +53,9 @@ router.patch("/:id", async (req, res) => {
   const request = await prisma.accommodationRequest.update({
     where: { id: req.params.id },
     data,
+    include: { company: true },
   });
-  res.json({ request: serializeRequest(request) });
+  res.json({ request: serializeRequestList(request) });
 });
 
 const negotiationSchema = z.object({

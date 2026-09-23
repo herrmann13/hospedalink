@@ -254,8 +254,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-white p-6">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-ink">{title}</h2>
         {action}
       </div>
@@ -334,7 +334,7 @@ function ProposalRow({
           </Button>
         )}
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-sm">
+      <div className="mt-3 grid grid-cols-1 gap-3 border-t border-border pt-3 text-sm sm:grid-cols-3 sm:gap-2">
         <div>
           <p className="text-xs text-muted">Hospedagem</p>
           <p className="font-medium text-ink">{formatBRL(proposal.amount)}</p>
@@ -404,7 +404,7 @@ function AddPartnerModal({
             onChange={(e) => setOfferedDailyRate(e.target.value)}
           />
         </Field>
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
@@ -483,7 +483,7 @@ function AddProposalModal({
             ))}
           </Select>
         </Field>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="Hóspedes">
             <Input type="number" min={1} value={numberOfGuests} onChange={(e) => setNumberOfGuests(e.target.value)} />
           </Field>
@@ -513,7 +513,7 @@ function AddProposalModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>

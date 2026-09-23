@@ -40,7 +40,7 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
             role="dialog"
             aria-modal="true"
             className={cn(
-              "relative w-full rounded-2xl bg-white shadow-card max-h-[90dvh] overflow-y-auto",
+              "relative w-full max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-card max-h-[90dvh] overflow-y-auto",
               maxWidth,
             )}
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -49,12 +49,12 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
             {title && (
-              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
                 <h3 className="text-lg font-semibold text-ink">{title}</h3>
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="text-muted hover:text-ink transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-ink"
                     aria-label="Fechar"
                   >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -64,7 +64,7 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
                 )}
               </div>
             )}
-            <div className="px-6 py-5">{children}</div>
+            <div className="px-4 py-5 sm:px-6">{children}</div>
           </motion.div>
         </div>
       )}

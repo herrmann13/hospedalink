@@ -45,6 +45,7 @@ bun run dev          # sobe frontend (Vite :5173) e API (Express :3001)
 | Comando | O que faz |
 |---|---|
 | `bun run dev` | Sobe frontend + backend em modo desenvolvimento |
+| `bun start` | Aplica o schema, inicializa o seed se necessário e sobe o servidor de produção |
 | `bun run build` | Gera o client de produção e o Prisma Client |
 | `bun run db:push` | Aplica o schema atual ao banco |
 | `bun run db:seed` | Roda o seed |
@@ -56,7 +57,9 @@ bun run dev          # sobe frontend (Vite :5173) e API (Express :3001)
 - **Painel administrativo:** http://localhost:5173/admin
 - **Login do admin (seed):** `admin@hospedalink.com.br` / `admin123`
 
-O `server/.env` contém `DATABASE_URL`, `JWT_SECRET` e `PORT`. Este arquivo é ignorado pelo git (`.env*`) e deve ser recriado em um clone novo. Em produção, `JWT_SECRET` é obrigatório e deve ser uma chave longa e aleatória.
+O `server/.env` contém `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN` e `PORT`. Este arquivo é ignorado pelo git (`.env*`) e deve ser recriado em um clone novo. Use `server/.env.example` como referência. Em produção, `JWT_SECRET` e `CLIENT_ORIGIN` são obrigatórios. O segredo deve ser uma chave longa e aleatória, e `CLIENT_ORIGIN` deve conter apenas a URL pública do frontend.
+
+No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e expõe `/api/health` como health check. As variáveis de produção devem ser configuradas no serviço, nunca no frontend.
 
 ---
 

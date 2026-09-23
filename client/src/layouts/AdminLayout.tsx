@@ -64,7 +64,7 @@ export function AdminLayout() {
         {menuOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-brand-strong/40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute inset-y-0 left-0 w-64 bg-brand-strong">
+             <div className="absolute inset-y-0 left-0 w-[min(16rem,calc(100vw-2rem))] bg-brand-strong">
               <Sidebar onNavigate={() => setMenuOpen(false)} />
               <div className="border-t border-white/10 px-3 py-4">
                 <button

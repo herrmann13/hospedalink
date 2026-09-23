@@ -305,7 +305,7 @@ paths:
           description: Não encontrado
     patch:
       tags: [Admin]
-      summary: Atualiza parceiro (ex.: aprovar)
+      summary: "Atualiza parceiro (ex.: aprovar)"
       parameters:
         - $ref: "#/components/parameters/IdPath"
       requestBody:
@@ -685,6 +685,23 @@ components:
         createdAt:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        company:
+          $ref: "#/components/schemas/Company"
+        negotiations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Negotiation"
+        proposals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Proposal"
+        contracts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contract"
 
     Partner:
       type: object
@@ -721,6 +738,30 @@ components:
             $ref: "#/components/schemas/RoomType"
         notes:
           type: string
+
+    CompanySummary:
+      type: object
+      required: [id, tradeName]
+      properties:
+        id:
+          type: string
+        tradeName:
+          type: string
+
+    PartnerSummary:
+      type: object
+      required: [id, legalName, tradeName, availableCapacity, status]
+      properties:
+        id:
+          type: string
+        legalName:
+          type: string
+        tradeName:
+          type: string
+        availableCapacity:
+          type: integer
+        status:
+          $ref: "#/components/schemas/PartnerStatus"
 
     RoomType:
       type: object
@@ -763,6 +804,15 @@ components:
           type: number
         notes:
           type: string
+        partner:
+          $ref: "#/components/schemas/PartnerSummary"
+        request:
+          type: object
+          properties:
+            protocol:
+              type: string
+            company:
+              $ref: "#/components/schemas/CompanySummary"
 
     Proposal:
       type: object
@@ -795,6 +845,8 @@ components:
           type: string
         status:
           $ref: "#/components/schemas/ProposalStatus"
+        partner:
+          $ref: "#/components/schemas/PartnerSummary"
 
     Contract:
       type: object
@@ -827,6 +879,21 @@ components:
           type: number
         status:
           $ref: "#/components/schemas/ContractStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        partner:
+          $ref: "#/components/schemas/PartnerSummary"
+        company:
+          $ref: "#/components/schemas/CompanySummary"
+        request:
+          type: object
+          properties:
+            protocol:
+              type: string
 
     RequestStatus:
       type: string

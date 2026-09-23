@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { requireAuth } from "../../middleware/auth";
 import { negotiationStatusSchema } from "../../lib/statuses";
+import { serializeNegotiation } from "../../lib/serialize";
 
 const router = Router();
 router.use(requireAuth);
@@ -12,7 +13,7 @@ router.get("/", async (_req, res) => {
     include: { partner: true, request: { include: { company: true } } },
     orderBy: { createdAt: "desc" },
   });
-  res.json({ negotiations });
+  res.json({ negotiations: negotiations.map(serializeNegotiation) });
 });
 
 const patchSchema = z.object({
@@ -38,7 +39,7 @@ router.patch("/:id", async (req, res) => {
     data,
     include: { partner: true, request: { include: { company: true } } },
   });
-  res.json({ negotiation });
+  res.json({ negotiation: serializeNegotiation(negotiation) });
 });
 
 export default router;

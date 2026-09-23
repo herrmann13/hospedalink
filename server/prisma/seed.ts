@@ -6,6 +6,15 @@ const prisma = new PrismaClient();
 const img = (seed: string) => `https://picsum.photos/seed/${seed}/900/600`;
 
 async function main() {
+  const existingAdmin = await prisma.adminUser.findUnique({
+    where: { email: "admin@hospedalink.com.br" },
+  });
+
+  if (existingAdmin) {
+    console.log("Seed já aplicado. Mantendo os dados existentes.");
+    return;
+  }
+
   console.log("Limpando banco...");
   await prisma.contract.deleteMany();
   await prisma.proposal.deleteMany();

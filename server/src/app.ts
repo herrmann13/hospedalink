@@ -12,10 +12,28 @@ import adminDashboard from "./routes/admin/dashboard";
 
 export function createApp() {
   const app = express();
+  const configuredOrigin = process.env.CLIENT_ORIGIN;
+
+  if (process.env.NODE_ENV === "production" && !configuredOrigin) {
+    throw new Error("CLIENT_ORIGIN é obrigatório em produção.");
+  }
+
+  const allowedOrigins = new Set(
+    (configuredOrigin ?? "http://localhost:5173")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  );
 
   app.use(
     cors({
-      origin: true,
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.has(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(null, false);
+      },
       credentials: true,
     }),
   );

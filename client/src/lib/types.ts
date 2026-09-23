@@ -46,6 +46,11 @@ export interface Company {
   createdAt: string;
 }
 
+export interface CompanySummary {
+  id: string;
+  tradeName: string;
+}
+
 export interface AccommodationRequest {
   id: string;
   protocol: string;
@@ -88,6 +93,14 @@ export interface Partner {
   images?: PartnerImage[];
 }
 
+export interface PartnerSummary {
+  id: string;
+  legalName: string;
+  tradeName: string;
+  availableCapacity: number;
+  status: PartnerStatus;
+}
+
 export interface RoomType {
   id: string;
   partnerId: string;
@@ -108,7 +121,7 @@ export interface Negotiation {
   id: string;
   requestId: string;
   partnerId: string;
-  partner?: Partner;
+  partner?: PartnerSummary;
   status: NegotiationStatus;
   offeredDailyRate?: number | null;
   numberOfGuests?: number | null;
@@ -125,7 +138,7 @@ export interface Proposal {
   negotiationId?: string | null;
   requestId: string;
   partnerId: string;
-  partner?: Partner;
+  partner?: PartnerSummary;
   amount: number;
   commission: number;
   totalAmount: number;
@@ -145,8 +158,8 @@ export interface Contract {
   proposalId: string;
   companyId: string;
   partnerId: string;
-  partner?: Partner;
-  company?: Company;
+  partner?: PartnerSummary;
+  company?: CompanySummary;
   checkIn: string;
   checkOut: string;
   numberOfGuests: number;
@@ -156,6 +169,10 @@ export interface Contract {
   totalAmount: number;
   status: ContractStatus;
   createdAt: string;
+  updatedAt?: string;
+  request?: {
+    protocol: string;
+  };
 }
 
 export interface DashboardStats {

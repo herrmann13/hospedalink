@@ -2,12 +2,12 @@ import { SignJWT, jwtVerify } from "jose";
 
 const configuredSecret = process.env.JWT_SECRET;
 
-if (process.env.NODE_ENV === "production" && !configuredSecret) {
-  throw new Error("JWT_SECRET é obrigatório em produção.");
+if (process.env.NODE_ENV !== "test" && !configuredSecret) {
+  throw new Error("JWT_SECRET é obrigatório fora do ambiente de testes.");
 }
 
 const secret = new TextEncoder().encode(
-  configuredSecret ?? "hospeda-link-dev-secret-change-me",
+  configuredSecret ?? "test-only-secret",
 );
 
 export interface TokenPayload {

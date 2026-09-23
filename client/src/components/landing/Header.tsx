@@ -75,7 +75,7 @@ export function Header({ overlay = false }: { overlay?: boolean }) {
         <button
           className="flex h-10 w-10 items-center justify-center rounded-lg lg:hidden"
           onClick={() => setOpen((v) => !v)}
-          aria-label="Abrir menu"
+           aria-label={open ? "Fechar menu" : "Abrir menu"}
           aria-expanded={open}
         >
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={solid ? "text-ink" : "text-white"}>

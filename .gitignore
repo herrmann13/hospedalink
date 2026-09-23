@@ -4,7 +4,7 @@ AGENTS.md
 CLAUDE.md
 opencode.json
 .env*
-
+*.pdf
 # Dependencies
 node_modules/
 

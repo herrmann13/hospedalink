@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { requireAuth } from "../../middleware/auth";
 import { contractStatusSchema } from "../../lib/statuses";
+import { serializeContract } from "../../lib/serialize";
 
 const router = Router();
 router.use(requireAuth);
@@ -12,7 +13,7 @@ router.get("/", async (_req, res) => {
     include: { partner: true, company: true, request: true },
     orderBy: { createdAt: "desc" },
   });
-  res.json({ contracts });
+  res.json({ contracts: contracts.map(serializeContract) });
 });
 
 const createSchema = z.object({
@@ -58,7 +59,7 @@ router.post("/", async (req, res) => {
       totalAmount: proposal.totalAmount,
       status: "AGUARDANDO_ASSINATURA",
     },
-    include: { partner: true, company: true },
+    include: { partner: true, company: true, request: true },
   });
 
   await prisma.$transaction([
@@ -72,7 +73,7 @@ router.post("/", async (req, res) => {
     }),
   ]);
 
-  res.status(201).json({ contract });
+  res.status(201).json({ contract: serializeContract(contract) });
 });
 
 const patchSchema = z.object({ status: contractStatusSchema });
@@ -86,9 +87,9 @@ router.patch("/:id", async (req, res) => {
   const contract = await prisma.contract.update({
     where: { id: req.params.id },
     data: { status: parsed.data.status },
-    include: { partner: true, company: true },
+    include: { partner: true, company: true, request: true },
   });
-  res.json({ contract });
+  res.json({ contract: serializeContract(contract) });
 });
 
 export default router;

@@ -38,8 +38,14 @@
     font-family: var(--font-sans);
     color: var(--color-ink);
     background-color: #ffffff;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  img,
+  svg {
+    max-width: 100%;
   }
 
   ::selection {

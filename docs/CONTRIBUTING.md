@@ -30,6 +30,8 @@ Toda e qualquer alteração no sistema — **rotas, modelos, campos, enums de st
 - [ ] Validação nova refletida em `client/src/lib/validators.ts` e no schema do endpoint.
 - [ ] Consentimentos, datas e valores devem ser validados novamente no backend, mesmo quando já validados no frontend.
 - [ ] Serialização atualizada em `server/src/lib/serialize.ts` quando a forma dos dados muda.
+- [ ] Respostas da API usam serializers explícitos; não retornar entidades Prisma com spread (`...entity`).
+- [ ] Segredos e variáveis de produção ficam no Railway, nunca em `client/`, no bundle Vite ou em arquivos versionados.
 - [ ] Fluxos e comandos descritos no guia de uso seguem válidos.
 
 ---

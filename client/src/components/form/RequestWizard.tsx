@@ -316,7 +316,7 @@ export function RequestWizard() {
           </motion.div>
         </AnimatePresence>
 
-        <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
+        <div className="mt-10 flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <Button type="button" variant="ghost" onClick={back} disabled={step === 0} className={cn(step === 0 && "invisible")}>
             <ArrowLeft size={16} />
             Voltar
