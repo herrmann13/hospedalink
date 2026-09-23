@@ -1,0 +1,33 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bunx --bun prisma generate",
+    "start": "bun src/index.ts",
+    "db:push": "bunx --bun prisma db push",
+    "db:seed": "bunx --bun prisma db seed",
+    "db:reset": "bunx --bun prisma db push --force-reset && bunx --bun prisma db seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "jose": "^5.9.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "prisma": "^6.1.0",
+    "tsx": "^4.19.0"
+  },
+  "prisma": {
+    "seed": "bun prisma/seed.ts"
+  }
+}

@@ -1,0 +1,886 @@
+openapi: 3.0.3
+info:
+  title: Hospeda Link API
+  version: 0.1.0
+  description: |
+    API da central de hospedagem corporativa em Jataí-GO.
+    Endpoints administrativos exigem o cookie de sessão (JWT) definido em `POST /api/auth/login`.
+servers:
+  - url: http://localhost:3001/api
+    description: Desenvolvimento local
+tags:
+  - name: Auth
+  - name: Público
+  - name: Admin
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autentica um usuário administrativo
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Sessão iniciada (define o cookie `hl_admin`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Credenciais inválidas
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Encerra a sessão
+      security: []
+      responses:
+        "204":
+          description: Sessão encerrada
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Retorna o usuário autenticado
+      responses:
+        "200":
+          description: Usuário autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Não autenticado
+
+  /requests:
+    post:
+      tags: [Público]
+      summary: Cria uma solicitação de hospedagem (com a empresa)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequestInput"
+      responses:
+        "201":
+          description: Solicitação criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  protocol:
+                    type: string
+                    example: "SOL-000005"
+        "400":
+          description: Dados inválidos
+
+  /partners:
+    post:
+      tags: [Público]
+      summary: Solicita cadastro de parceiro (status PENDING)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartnerInput"
+      responses:
+        "201":
+          description: Cadastro recebido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        "400":
+          description: Dados inválidos
+
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Métricas do dashboard
+      responses:
+        "200":
+          description: Métricas agregadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    $ref: "#/components/schemas/DashboardStats"
+
+  /admin/requests:
+    get:
+      tags: [Admin]
+      summary: Lista solicitações
+      responses:
+        "200":
+          description: Lista de solicitações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccommodationRequest"
+
+  /admin/requests/{id}:
+    get:
+      tags: [Admin]
+      summary: Detalhe da solicitação
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Solicitação com empresa, requisitos, negociações, propostas e contratos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    $ref: "#/components/schemas/AccommodationRequest"
+        "404":
+          description: Não encontrada
+    patch:
+      tags: [Admin]
+      summary: Atualiza status e observações internas
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: "#/components/schemas/RequestStatus"
+                internalNotes:
+                  type: string
+      responses:
+        "200":
+          description: Solicitação atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    $ref: "#/components/schemas/AccommodationRequest"
+
+  /admin/requests/{id}/negotiations:
+    post:
+      tags: [Admin]
+      summary: Associa um parceiro à solicitação (cria uma negociação)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partnerId]
+              properties:
+                partnerId:
+                  type: string
+                status:
+                  $ref: "#/components/schemas/NegotiationStatus"
+                offeredDailyRate:
+                  type: number
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Negociação criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  negotiation:
+                    $ref: "#/components/schemas/Negotiation"
+
+  /admin/requests/{id}/proposals:
+    post:
+      tags: [Admin]
+      summary: Cria uma proposta com cálculo automático de valores
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partnerId, numberOfGuests, dailyRate, numberOfDays]
+              properties:
+                partnerId:
+                  type: string
+                numberOfGuests:
+                  type: integer
+                dailyRate:
+                  type: number
+                numberOfDays:
+                  type: integer
+                servicesDescription:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Proposta criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  proposal:
+                    $ref: "#/components/schemas/Proposal"
+
+  /admin/partners:
+    get:
+      tags: [Admin]
+      summary: Lista parceiros
+      responses:
+        "200":
+          description: Lista de parceiros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partners:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Partner"
+
+  /admin/partners/{id}:
+    get:
+      tags: [Admin]
+      summary: Detalhe do parceiro
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Parceiro com quartos, serviços e fotos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+        "404":
+          description: Não encontrado
+    patch:
+      tags: [Admin]
+      summary: Atualiza parceiro (ex.: aprovar)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: "#/components/schemas/PartnerStatus"
+                availableCapacity:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Parceiro atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+
+  /admin/negotiations:
+    get:
+      tags: [Admin]
+      summary: Lista negociações
+      responses:
+        "200":
+          description: Lista de negociações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  negotiations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Negotiation"
+
+  /admin/negotiations/{id}:
+    patch:
+      tags: [Admin]
+      summary: Atualiza status de uma negociação
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: "#/components/schemas/NegotiationStatus"
+                offeredDailyRate:
+                  type: number
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Negociação atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  negotiation:
+                    $ref: "#/components/schemas/Negotiation"
+
+  /admin/contracts:
+    get:
+      tags: [Admin]
+      summary: Lista contratos
+      responses:
+        "200":
+          description: Lista de contratos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contract"
+    post:
+      tags: [Admin]
+      summary: Converte uma proposta em contrato
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [proposalId]
+              properties:
+                proposalId:
+                  type: string
+      responses:
+        "201":
+          description: Contrato criado (a proposta vira CONVERTIDA e a solicitação CONTRATO_FECHADO)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contract:
+                    $ref: "#/components/schemas/Contract"
+        "409":
+          description: Proposta já convertida
+
+  /admin/contracts/{id}:
+    patch:
+      tags: [Admin]
+      summary: Atualiza status de um contrato
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/ContractStatus"
+      responses:
+        "200":
+          description: Contrato atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contract:
+                    $ref: "#/components/schemas/Contract"
+
+  /admin/settings:
+    get:
+      tags: [Admin]
+      summary: Lê a taxa de captação padrão
+      responses:
+        "200":
+          description: Taxa atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commissionRate:
+                    type: number
+                    example: 10
+    patch:
+      tags: [Admin]
+      summary: Altera a taxa de captação padrão
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [commissionRate]
+              properties:
+                commissionRate:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+      responses:
+        "200":
+          description: Taxa atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commissionRate:
+                    type: number
+
+components:
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        openRequests:
+          type: integer
+        negotiatingRequests:
+          type: integer
+        activeContracts:
+          type: integer
+        partners:
+          type: integer
+        activeGuests:
+          type: integer
+        totalNegotiated:
+          type: number
+        estimatedRevenue:
+          type: number
+
+    CreateRequestInput:
+      type: object
+      required:
+        - tradeName
+        - cnpj
+        - contactName
+        - contactEmail
+        - contactPhone
+        - numberOfGuests
+        - checkIn
+        - checkOut
+        - accommodationPreference
+        - consent
+      properties:
+        tradeName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        contactRole:
+          type: string
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        numberOfGuests:
+          type: integer
+          minimum: 1
+        checkIn:
+          type: string
+          format: date
+        checkOut:
+          type: string
+          format: date
+        workLocation:
+          type: string
+        accommodationPreference:
+          type: array
+          items:
+            type: string
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        budgetRange:
+          type: string
+        notes:
+          type: string
+        consent:
+          type: boolean
+          enum: [true]
+
+    CreatePartnerInput:
+      type: object
+      required:
+        - tradeName
+        - legalName
+        - cnpj
+        - contactName
+        - phone
+        - email
+        - address
+        - availableCapacity
+        - roomTypes
+        - consent
+      properties:
+        tradeName:
+          type: string
+        legalName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        availableCapacity:
+          type: integer
+          minimum: 1
+        roomTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoomTypeInput"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        conditions:
+          type: string
+        notes:
+          type: string
+        consent:
+          type: boolean
+          enum: [true]
+
+    RoomTypeInput:
+      type: object
+      required: [name, quantity, bedsPerRoom, priceType, price]
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        bedsPerRoom:
+          type: integer
+        priceType:
+          type: string
+          enum: [DIARIA, PESSOA, QUARTO, SEMANAL, MENSAL]
+        price:
+          type: number
+
+    AccommodationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        protocol:
+          type: string
+        companyId:
+          type: string
+        numberOfGuests:
+          type: integer
+        checkIn:
+          type: string
+          format: date-time
+        checkOut:
+          type: string
+          format: date-time
+        workLocation:
+          type: string
+        accommodationPreference:
+          type: array
+          items:
+            type: string
+        budgetRange:
+          type: string
+        notes:
+          type: string
+        internalNotes:
+          type: string
+        status:
+          $ref: "#/components/schemas/RequestStatus"
+        requirements:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        createdAt:
+          type: string
+          format: date-time
+
+    Partner:
+      type: object
+      properties:
+        id:
+          type: string
+        legalName:
+          type: string
+        tradeName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        availableCapacity:
+          type: integer
+        status:
+          $ref: "#/components/schemas/PartnerStatus"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        roomTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoomType"
+        notes:
+          type: string
+
+    RoomType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+        bedsPerRoom:
+          type: integer
+        priceType:
+          type: string
+        price:
+          type: number
+
+    Negotiation:
+      type: object
+      properties:
+        id:
+          type: string
+        requestId:
+          type: string
+        partnerId:
+          type: string
+        status:
+          $ref: "#/components/schemas/NegotiationStatus"
+        offeredDailyRate:
+          type: number
+        numberOfGuests:
+          type: integer
+        numberOfDays:
+          type: integer
+        accommodationValue:
+          type: number
+        commissionPercentage:
+          type: number
+        commissionValue:
+          type: number
+        notes:
+          type: string
+
+    Proposal:
+      type: object
+      properties:
+        id:
+          type: string
+        negotiationId:
+          type: string
+        requestId:
+          type: string
+        partnerId:
+          type: string
+        amount:
+          type: number
+        commission:
+          type: number
+        totalAmount:
+          type: number
+        commissionPercentage:
+          type: number
+        numberOfGuests:
+          type: integer
+        numberOfDays:
+          type: integer
+        dailyRate:
+          type: number
+        servicesDescription:
+          type: string
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/ProposalStatus"
+
+    Contract:
+      type: object
+      properties:
+        id:
+          type: string
+        requestId:
+          type: string
+        proposalId:
+          type: string
+        companyId:
+          type: string
+        partnerId:
+          type: string
+        checkIn:
+          type: string
+          format: date-time
+        checkOut:
+          type: string
+          format: date-time
+        numberOfGuests:
+          type: integer
+        accommodationAmount:
+          type: number
+        commissionPercentage:
+          type: number
+        commissionAmount:
+          type: number
+        totalAmount:
+          type: number
+        status:
+          $ref: "#/components/schemas/ContractStatus"
+
+    RequestStatus:
+      type: string
+      enum:
+        - NOVA
+        - EM_ANALISE
+        - BUSCANDO_HOSPEDAGEM
+        - PROPOSTA_ENVIADA
+        - EM_NEGOCIACAO
+        - APROVADA
+        - CONTRATO_FECHADO
+        - CANCELADA
+
+    PartnerStatus:
+      type: string
+      enum: [PENDING, ACTIVE, INACTIVE]
+
+    NegotiationStatus:
+      type: string
+      enum:
+        - AGUARDANDO_RETORNO
+        - DISPONIVEL
+        - INDISPONIVEL
+        - NEGOCIANDO
+        - SELECIONADO
+        - RECUSADO
+
+    ProposalStatus:
+      type: string
+      enum: [ABERTA, ENVIADA, ACEITA, RECUSADA, CONVERTIDA]
+
+    ContractStatus:
+      type: string
+      enum: [AGUARDANDO_ASSINATURA, ATIVO, FINALIZADO, CANCELADO]
+
+    RequirementType:
+      type: string
+      enum:
+        - BREAKFAST
+        - LUNCH
+        - DINNER
+        - LAUNDRY
+        - PARKING
+        - WIFI
+        - AIR_CONDITIONING
+        - KITCHEN
+        - RECEPTION_24H
+        - OTHER
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: hl_admin
+
+security:
+  - cookieAuth: []

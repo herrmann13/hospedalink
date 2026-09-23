@@ -1,0 +1,30 @@
+.claude
+.agents*
+AGENTS.md
+CLAUDE.md
+opencode.json
+.env*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+server/prisma/*.db
+server/prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# Vite
+client/.vite

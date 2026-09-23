@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String                @id @default(cuid())
+  legalName    String
+  tradeName    String
+  cnpj         String
+  contactName  String
+  contactRole  String?
+  contactEmail String
+  contactPhone String
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  requests     AccommodationRequest[]
+  contracts    Contract[]
+}
+
+model AccommodationRequest {
+  id                     String                    @id @default(cuid())
+  protocol               String                    @unique
+  companyId              String
+  company                Company                   @relation(fields: [companyId], references: [id])
+  numberOfGuests         Int
+  checkIn                DateTime
+  checkOut               DateTime
+  workLocation           String?
+  accommodationPreference String
+  budgetRange            String?
+  notes                  String?
+  internalNotes          String?
+  status                 String                    @default("NOVA")
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  requirements           AccommodationRequirement[]
+  negotiations           Negotiation[]
+  proposals              Proposal[]
+  contracts              Contract[]
+}
+
+model AccommodationRequirement {
+  id        String               @id @default(cuid())
+  requestId String
+  request   AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type      String
+  value     String?
+}
+
+model Partner {
+  id                String          @id @default(cuid())
+  legalName         String
+  tradeName         String
+  cnpj              String
+  contactName       String
+  phone             String
+  whatsapp          String?
+  email             String
+  address           String
+  latitude          Float?
+  longitude         Float?
+  availableCapacity Int
+  status            String          @default("PENDING")
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  roomTypes         RoomType[]
+  services          PartnerService[]
+  images            PartnerImage[]
+  negotiations      Negotiation[]
+  proposals         Proposal[]
+  contracts         Contract[]
+}
+
+model RoomType {
+  id          String  @id @default(cuid())
+  partnerId   String
+  partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    Int
+  bedsPerRoom Int
+  priceType   String
+  price       Float
+  notes       String?
+}
+
+model PartnerService {
+  id          String  @id @default(cuid())
+  partnerId   String
+  partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  serviceType String
+}
+
+model PartnerImage {
+  id        String  @id @default(cuid())
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  sortOrder Int     @default(0)
+}
+
+model Negotiation {
+  id                 String               @id @default(cuid())
+  requestId          String
+  request            AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId          String
+  partner            Partner              @relation(fields: [partnerId], references: [id])
+  status             String               @default("AGUARDANDO_RETORNO")
+  offeredDailyRate   Float?
+  numberOfGuests     Int?
+  numberOfDays       Int?
+  accommodationValue Float?
+  commissionPercentage Float?
+  commissionValue    Float?
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  proposals          Proposal[]
+}
+
+model Proposal {
+  id                  String      @id @default(cuid())
+  negotiationId       String?
+  negotiation         Negotiation? @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  requestId           String
+  request             AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId           String
+  partner             Partner     @relation(fields: [partnerId], references: [id])
+  amount              Float
+  commission          Float
+  totalAmount         Float
+  commissionPercentage Float?
+  numberOfGuests      Int?
+  numberOfDays        Int?
+  dailyRate           Float?
+  servicesDescription String?
+  notes               String?
+  status              String      @default("ABERTA")
+  createdAt           DateTime    @default(now())
+  contract            Contract?
+}
+
+model Contract {
+  id                  String               @id @default(cuid())
+  requestId           String
+  request             AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  proposalId          String               @unique
+  proposal            Proposal             @relation(fields: [proposalId], references: [id])
+  companyId           String
+  company             Company              @relation(fields: [companyId], references: [id])
+  partnerId           String
+  partner             Partner              @relation(fields: [partnerId], references: [id])
+  checkIn             DateTime
+  checkOut            DateTime
+  numberOfGuests      Int
+  accommodationAmount Float
+  commissionPercentage Float
+  commissionAmount    Float
+  totalAmount         Float
+  status              String               @default("AGUARDANDO_ASSINATURA")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
