@@ -37,7 +37,8 @@ export function ComoFunciona() {
           <Reveal key={step.n} delay={i * 0.08} className="border-b border-border bg-white sm:even:border-l sm:even:pl-7 lg:border-l lg:pl-7 lg:pr-7 lg:first:border-l-0 lg:first:pl-0">
             <div className="flex h-full flex-col py-7 lg:min-h-[230px]">
               <span className="font-mono text-sm text-accent">{step.n}</span>
-              <h3 className="mt-5 text-lg font-semibold text-ink">{step.title}</h3>
+                <h3 className="mt-5 text-lg font-semibold text-ink">{step.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">{step.text}</p>
             </div>
           </Reveal>
         ))}

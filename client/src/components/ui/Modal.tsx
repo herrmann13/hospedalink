@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/cn";
@@ -12,18 +12,35 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }: ModalProps) {
+  const dialog = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; }, [onClose]);
   useEffect(() => {
     if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const frame = requestAnimationFrame(() => dialog.current?.focus());
+    const overflow = document.body.style.overflow;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape") close.current?.();
+      if (e.key === "Tab" && dialog.current) {
+        const items = Array.from(dialog.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')).filter(el => el.getClientRects().length > 0);
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (!first) { e.preventDefault(); dialog.current.focus(); }
+        else if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialog.current)) { e.preventDefault(); first.focus(); }
+      }
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = overflow;
+      previous?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return createPortal(
     <AnimatePresence>
@@ -38,6 +55,10 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
           />
           <motion.div
             role="dialog"
+            ref={dialog}
+            tabIndex={-1}
+            aria-labelledby={title ? titleId : undefined}
+            aria-label={title ? undefined : "Confirmação"}
             aria-modal="true"
             className={cn(
               "relative w-full max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-card max-h-[90dvh] overflow-y-auto",
@@ -50,7 +71,7 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
           >
             {title && (
               <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
-                <h3 className="text-lg font-semibold text-ink">{title}</h3>
+                <h3 id={titleId} className="text-lg font-semibold text-ink">{title}</h3>
                 {onClose && (
                   <button
                     onClick={onClose}

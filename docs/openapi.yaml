@@ -719,6 +719,7 @@ components:
           type: string
         notes:
           type: string
+          description: Pode incluir preferência de parceiro declarada pelo solicitante, sem vínculo automático ou garantia de reserva.
         consent:
           type: boolean
           enum: [true]

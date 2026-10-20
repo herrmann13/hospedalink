@@ -10,7 +10,7 @@ O **Hospeda Link** conecta empresas a estabelecimentos de hospedagem em Jataí. 
 
 **Empresa acessa o site → entende o serviço → preenche o formulário → a solicitação aparece no painel administrativo → o operador consulta parceiros → cadastra opções e valores → registra a negociação → fecha uma proposta → converte em contrato.**
 
-O sistema **não** faz reserva automática, não exibe estabelecimentos publicamente e não processa pagamento online. Toda negociação é intermediada pela equipe interna.
+O sistema exibe parceiros ativos em catálogo público, mas **não** faz reserva automática nem processa pagamento online. Toda negociação é intermediada pela equipe interna.
 
 ---
 
@@ -136,6 +136,10 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 3. Preenche o formulário em 4 etapas: **Sua empresa → Sua equipe → Hospedagem → Contato e confirmação**.
 4. O formulário aplica máscara de CNPJ e telefone, valida as datas (saída > entrada) e calcula as diárias automaticamente.
 5. Ao enviar, recebe um protocolo (ex.: `SOL-000005`).
+
+O detalhe de um parceiro leva ao formulário com `?parceiro=<id>`. O formulário consulta o cadastro público e permite remover essa preferência. Ao enviar, inclui o nome e a referência do parceiro em `notes`, visíveis nas observações da solicitação no painel. É uma preferência declarada pelo solicitante, não uma reserva ou negociação automaticamente vinculada. O contrato da API e o schema do banco permanecem os mesmos.
+
+Preços e capacidade são referenciais, sujeitos à confirmação para o período solicitado. Catálogo vazio ou sem resultados oferece acesso à cotação; falhas de carregamento permitem nova tentativa. Termos e privacidade abrem em nova aba para preservar o formulário. O retorno é pelo contato informado; não há WhatsApp oficial configurado no site.
 
 ### 5.2 Fluxo de parceiros
 

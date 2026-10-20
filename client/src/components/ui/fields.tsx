@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useId, cloneElement, isValidElement } from "react";
 import { cn } from "@/lib/cn";
 
 const controlBase =
@@ -46,15 +46,23 @@ interface FieldProps {
 }
 
 export function Field({ label, htmlFor, required, hint, error, children, className }: FieldProps) {
+  const generatedId = useId();
+  const id = htmlFor ?? generatedId;
+  const controlProps = { id, "aria-required": required || undefined, "aria-invalid": Boolean(error), "aria-describedby": error || hint ? `${id}-message` : undefined };
+  const control = isValidElement<{ render?: (props: any) => React.ReactElement }>(children)
+    ? children.props.render
+      ? cloneElement(children, { render: (props: any) => cloneElement(children.props.render!(props), controlProps) })
+      : cloneElement(children as React.ReactElement<React.InputHTMLAttributes<HTMLInputElement>>, controlProps)
+    : children;
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="text-sm font-medium text-ink">
         {label}
         {required && <span className="text-accent"> *</span>}
       </label>
-      {children}
-      {hint && !error && <p className="text-xs text-muted">{hint}</p>}
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+      {control}
+      {hint && !error && <p id={`${id}-message`} className="text-xs text-muted">{hint}</p>}
+      {error && <p id={`${id}-message`} role="alert" className="text-xs font-medium text-red-600">{error}</p>}
     </div>
   );
 }
@@ -70,7 +78,7 @@ interface CheckboxProps {
 export function Checkbox({ label, checked, onChange, error, description }: CheckboxProps) {
   return (
     <div>
-      <label className="flex cursor-pointer items-start gap-3">
+      <label className="flex cursor-pointer items-start gap-3 rounded focus-within:outline-2 focus-within:outline-accent">
         <span
           className={cn(
             "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors",

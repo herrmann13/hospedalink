@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Buildings, CheckCircle, MapPin, Users } from "@phosphor-icons/react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type { PublicPartner } from "@/lib/types";
 import { PARTNER_CATEGORY_LABEL, PRICE_TYPES, SERVICE_LABEL } from "@/lib/constants";
 import { formatBRL } from "@/lib/masks";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 
 export function ParceiroPublico() {
   const { id } = useParams<{ id: string }>();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["public-partner", id],
     queryFn: () => api.get<{ partner: PublicPartner }>(`/api/partners/${id}`),
     retry: false,
@@ -31,8 +31,9 @@ export function ParceiroPublico() {
   if (isError || !data) {
     return (
       <div className="mx-auto max-w-3xl px-4 pb-20 pt-36 text-center sm:px-6">
-        <h1 className="text-2xl font-semibold text-ink">Parceiro não encontrado</h1>
-        <p className="mt-3 text-muted">Este estabelecimento não está disponível no momento.</p>
+        <h1 className="text-2xl font-semibold text-ink">{error instanceof ApiError && error.status === 404 ? "Parceiro não encontrado" : "Não foi possível carregar o parceiro"}</h1>
+        <p className="mt-3 text-muted">Você pode consultar outras opções ou solicitar uma cotação.</p>
+        {!(error instanceof ApiError && error.status === 404) && <button type="button" onClick={() => void refetch()} className="mt-4 block mx-auto text-brand underline">Tentar novamente</button>}
         <LinkButton to="/parceiros" className="mt-8">
           Ver todos os parceiros
         </LinkButton>
@@ -100,7 +101,7 @@ export function ParceiroPublico() {
             </p>
             <p className="mt-2 flex items-center gap-2 text-muted">
               <Users size={18} className="shrink-0" />
-              Até {partner.availableCapacity} pessoa{partner.availableCapacity === 1 ? "" : "s"} disponíveis
+              Capacidade informada: até {partner.availableCapacity} pessoa{partner.availableCapacity === 1 ? "" : "s"}
             </p>
             {price && (
               <p className="mt-5 text-muted">
@@ -114,7 +115,8 @@ export function ParceiroPublico() {
                 Gostou desta opção? Envie sua solicitação e a equipe Hospeda Link negocia a hospedagem
                 da sua equipe com o estabelecimento.
               </p>
-              <LinkButton to="/solicitar-hospedagem" variant="accent" className="mt-4 w-full">
+              <p className="mt-3 text-sm text-muted">Preços referenciais. Valores e disponibilidade serão confirmados para as datas solicitadas. A solicitação não confirma uma reserva.</p>
+              <LinkButton to={`/solicitar-hospedagem?parceiro=${encodeURIComponent(partner.id)}`} variant="accent" className="mt-4 w-full">
                 Solicitar hospedagem
               </LinkButton>
             </div>

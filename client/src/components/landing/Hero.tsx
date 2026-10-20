@@ -61,6 +61,7 @@ export function Hero() {
             <div className="flex items-start justify-between border-b border-border pb-5">
               <div>
                 <h2 className="mt-2 text-xl font-semibold tracking-tight">Equipe de manutenção</h2>
+                <p className="mt-1 text-xs text-muted">Exemplo ilustrativo de solicitação</p>
               </div>
               <span className="font-mono text-xs text-accent">JATAÍ-GO</span>
             </div>

@@ -34,7 +34,7 @@ export function ParaEmpresas() {
             <div className="flex items-center justify-between py-5">
               <div>
                 <h3 className="mt-2 text-xl font-semibold tracking-tight text-ink">
-                  Construtora Horizonte
+                  Exemplo de equipe corporativa
                 </h3>
               </div>
               <span className="text-sm font-medium text-accent">Atendimento manual</span>

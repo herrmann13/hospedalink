@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 const MAX_SERVICES_IN_CARD = 4;
 
 export function CatalogoParceiros() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["public-partners"],
     queryFn: () => api.get<{ partners: PublicPartner[] }>("/api/partners"),
   });
@@ -27,13 +27,14 @@ export function CatalogoParceiros() {
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
             Hotéis, pousadas e alojamentos em Jataí preparados para receber equipes. Filtre pela
             quantidade de pessoas e pelas comodidades que sua equipe precisa.
+            Preços e capacidade são referenciais; confirme as condições para seu período com a Hospeda Link.
           </p>
         </div>
 
         <PartnerFilters state={filters} loading={isLoading} />
 
         {isError ? (
-          <EmptyState text="Não foi possível carregar os parceiros. Tente novamente em instantes." />
+            <><EmptyState text="Não foi possível carregar os parceiros." /><button type="button" onClick={() => void refetch()} className="mt-4 text-brand underline">Tentar novamente</button></>
         ) : isLoading ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -137,6 +138,7 @@ function EmptyState({ text }: { text: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center text-muted">
       {text}
+      <Link to="/solicitar-hospedagem" className="mt-4 block font-semibold text-brand underline">Solicitar cotação para minha equipe</Link>
     </div>
   );
 }

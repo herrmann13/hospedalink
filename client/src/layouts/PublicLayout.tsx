@@ -19,8 +19,9 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:p-3 focus:text-brand">Pular para o conteúdo</a>
       <Header overlay={pathname === "/"} />
-      <main className="flex-1">
+      <main id="conteudo" tabIndex={-1} className="flex-1">
         <Outlet />
       </main>
       <Footer />

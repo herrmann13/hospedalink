@@ -33,6 +33,8 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <Logo dark />
+            <p className="mt-4 text-sm text-white/80">Precisa hospedar sua equipe? Envie uma solicitação e retornaremos pelo contato informado.</p>
+            <Link to="/solicitar-hospedagem" className="mt-3 inline-block text-sm text-white underline">Falar com a Hospeda Link</Link>
           </div>
 
           {columns.map((col) => (

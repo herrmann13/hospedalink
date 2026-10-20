@@ -8,8 +8,8 @@ A Hospeda Link resolve essa necessidade de ponta a ponta: recebe o pedido da emp
 
 Nós **não** somos um site de reservas nem um portal de turismo. Somos um serviço de intermediação:
 
-- A empresa **não escolhe** sozinha onde vai ficar. Nossa equipe analisa, negocia e recomenda.
-- O estabelecimento **não aparece** em uma vitrine pública. Ele entra na nossa rede e recebe oportunidades qualificadas.
+- A empresa pode consultar o catálogo e indicar uma preferência. Nossa equipe confirma disponibilidade, negocia e recomenda; não há reserva automática.
+- Estabelecimentos ativos aparecem no catálogo público, sem contatos ou dados comerciais internos.
 - Toda negociação passa por nós. Nós organizamos, cobramos e formalizamos o contrato.
 
 ---
@@ -62,7 +62,7 @@ Três papéis participam do negócio. Cada um usa a ferramenta de um jeito difer
 
 ### O estabelecimento parceiro
 
-É o hotel, a pousada ou o alojamento que oferece a hospedagem. Ele se cadastra na nossa rede, informa sua estrutura e condições, e recebe oportunidades de negócio qualificadas.
+É o hotel, a pousada ou o alojamento que oferece a hospedagem. A equipe interna cadastra sua estrutura e condições na rede e intermedeia as oportunidades de negócio.
 
 ### A equipe interna
 
@@ -82,7 +82,7 @@ O ciclo completo de um atendimento segue estas etapas:
 6. **A equipe monta a proposta.** Calcula hospedagem, taxa e total, e apresenta as opções à empresa.
 7. **A empresa decide.** Se aprovar, a proposta vira contrato e a solicitação é considerada fechada.
 
-Em paralelo, o parceiro tem um caminho próprio: ele se cadastra, passa por uma aprovação e, a partir daí, começa a receber oportunidades de negócio.
+Em paralelo, a equipe interna cadastra e revisa os parceiros. Somente parceiros ativos aparecem no catálogo público.
 
 ---
 
@@ -92,7 +92,7 @@ A ferramenta que desenvolvemos é a **plataforma da Hospeda Link**. Ela não sub
 
 Ela tem duas portas de entrada:
 
-- **O site público**, usado pela empresa solicitante e pelo parceiro.
+- **O site público**, usado pela empresa solicitante para consultar opções e solicitar cotação.
 - **O painel interno**, usado apenas pela equipe da Hospeda Link.
 
 ### 6.1 O caminho da empresa solicitante
@@ -112,14 +112,14 @@ A partir daí, ela **aguarda o contato da equipe interna**. Ela não acompanha o
 
 ### 6.2 O caminho do parceiro
 
-O estabelecimento entra na rede pela página **Seja parceiro**:
+O estabelecimento entra na rede exclusivamente pelo cadastro da equipe interna em `/admin/parceiros/novo`. Não existe página pública **Seja parceiro**:
 
-1. Ele informa seus dados: nome, CNPJ, contato, endereço e capacidade de atendimento.
-2. Descreve sua estrutura: os tipos de quarto, a quantidade de cada um, quantas pessoas cabem por quarto e como cobra (por diária, por pessoa, por quarto, semanal ou mensal).
-3. Informa as condições comerciais e os serviços que oferece (café da manhã, Wi-Fi, lavanderia, estacionamento…).
-4. Envia fotos do estabelecimento.
+1. A equipe interna registra nome, CNPJ, contato, endereço e capacidade de atendimento.
+2. Registra tipos de quarto, quantidades, capacidade e forma de cobrança.
+3. Informa condições comerciais e serviços disponíveis.
+4. Após salvar, envia fotos reais na página do parceiro.
 
-O cadastro chega com o status **Pendente**. A equipe interna revisa e **aprova ou recusa** o parceiro. Aprovado, ele passa a fazer parte da rede e a receber oportunidades de negócio quando uma solicitação combina com seu perfil.
+A equipe interna define o status do cadastro. **Ativo** aparece no catálogo; **Pendente** e **Inativo** ficam ocultos. A capacidade informada não representa disponibilidade garantida para uma data.
 
 ### 6.3 O caminho da equipe interna
 
@@ -161,8 +161,8 @@ Tudo isso é **registro e apoio**. A decisão de qual parceiro faz sentido, o pr
 
 Algumas regras definem como a Hospeda Link se comporta:
 
-1. A empresa solicitante **não escolhe** a hospedagem pelo site. A equipe interna analisa e entra em contato.
-2. Os estabelecimentos **não aparecem publicamente** no site. Eles vivem dentro da rede, visíveis apenas para a equipe interna.
+1. A empresa solicitante pode indicar uma preferência pelo catálogo, mas a equipe interna confirma as condições antes do fechamento.
+2. Apenas estabelecimentos ativos aparecem publicamente, sem CNPJ, contatos ou observações internas.
 3. Toda negociação é **intermediada** pela Hospeda Link. Nada é fechado diretamente entre cliente e parceiro.
 4. A ferramenta **registra qual parceiro originou cada proposta**. É isso que sustenta o controle de comissões.
 5. A taxa de captação é **10% por padrão**, mas é **ajustável** pela equipe nas configurações.
@@ -197,11 +197,11 @@ A Hospeda Link cobra R$ 21.120 da construtora, fica com R$ 1.920 de taxa e repas
 Para entender o negócio, é tão importante saber o que ele **não** faz quanto o que ele faz:
 
 - **Não faz reserva automática.** Ninguém reserva quarto sozinho pelo site.
-- **Não exibe estabelecimentos publicamente.** Não há vitrine de hotéis para o público.
+- **Não expõe contatos dos estabelecimentos.** O catálogo público apresenta opções, com negociação intermediada pela Hospeda Link.
 - **Não processa pagamento online.** A cobrança é feita pela equipe, fora da plataforma.
 - **Não deixa a empresa acompanhar o andamento pelo site.** Depois do envio, a comunicação é direta com a equipe.
 
-Essas escolhas são propositais: a Hospeda Link vende **assessoria e negociação**, não uma vitrine de reservas. O valor está na equipe que conhece a cidade e na rede de parceiros, e a ferramenta existe para dar suporte a essa equipe.
+Essas escolhas são propositais: a Hospeda Link vende **assessoria e negociação**. O catálogo ajuda a conhecer opções, mas a reserva depende da negociação conduzida pela equipe.
 
 ---
 

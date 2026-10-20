@@ -17,13 +17,10 @@ export function ParaParceiros() {
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <Reveal className="order-2 lg:order-1">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10">
-              <img
-                src="https://picsum.photos/seed/hospeda-pousada/1000/750"
-                alt="Hospedagem parceira pronta para receber equipes"
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-strong/50 to-transparent" />
+              <div className="flex h-full flex-col justify-center p-8">
+                <h3 className="text-2xl font-semibold">Uma busca, diferentes opções</h3>
+                <p className="mt-4 leading-relaxed text-white/80">Conte o que sua equipe precisa. A Hospeda Link consulta os estabelecimentos e confirma as condições para o período solicitado.</p>
+              </div>
             </div>
           </Reveal>
 

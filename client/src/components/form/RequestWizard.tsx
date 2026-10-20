@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import type { PublicPartner } from "@/lib/types";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ArrowRight, CheckCircle, SpinnerGap, WhatsappLogo } from "@phosphor-icons/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { ArrowLeft, ArrowRight, CheckCircle, SpinnerGap } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea, Select, Checkbox } from "@/components/ui/fields";
 import { Modal } from "@/components/ui/Modal";
@@ -23,6 +25,17 @@ const stepFields: (keyof RequestFormValues)[][] = [
 ];
 
 export function RequestWizard() {
+  const reduceMotion = useReducedMotion();
+  const [params, setParams] = useSearchParams();
+  const partnerId = params.get("parceiro");
+  const { data: preferred, isLoading: loadingPreference, isError: preferenceError } = useQuery({
+    queryKey: ["public-partner", partnerId],
+    queryFn: () => api.get<{ partner: PublicPartner }>(`/api/partners/${encodeURIComponent(partnerId!)}`),
+    enabled: Boolean(partnerId),
+    retry: false,
+  });
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [submitError, setSubmitError] = useState("");
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [protocol, setProtocol] = useState<string | null>(null);
@@ -72,19 +85,24 @@ export function RequestWizard() {
   };
 
   const next = async () => {
-    const ok = await trigger(stepFields[step]);
-    if (ok) setStep((s) => Math.min(s + 1, 3));
+    const ok = await trigger(stepFields[step], { shouldFocus: true });
+    if (ok) { setStep((s) => Math.min(s + 1, 3)); heading.current?.focus(); }
   };
 
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const back = () => { setStep((s) => Math.max(s - 1, 0)); heading.current?.focus(); };
 
   const onSubmit = async (values: RequestFormValues) => {
+    if (submitting || protocol || (partnerId && (loadingPreference || preferenceError))) return;
     setSubmitting(true);
+    setSubmitError("");
     try {
-      const res = await api.post<{ protocol: string }>("/api/requests", values);
+      const notes = preferred && partnerId
+        ? `Preferência de hospedagem (sujeita à confirmação): ${preferred.partner.tradeName} — referência ${preferred.partner.id}.\n\n${values.notes ?? ""}`
+        : values.notes;
+      const res = await api.post<{ protocol: string }>("/api/requests", { ...values, notes });
       setProtocol(res.protocol);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erro ao enviar. Tente novamente.");
+      setSubmitError(e instanceof Error ? e.message : "Erro ao enviar. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
@@ -95,14 +113,20 @@ export function RequestWizard() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="mb-10">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        <h1 ref={heading} tabIndex={-1} className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
           Solicite uma cotação de hospedagem para sua equipe
         </h1>
         <p className="mt-3 text-base leading-relaxed text-muted">
           Preencha as informações abaixo. Nossa equipe analisará sua necessidade
           e entrará em contato com as opções disponíveis.
+          A solicitação não confirma uma reserva. O retorno será pelo telefone ou e-mail informado.
         </p>
       </div>
+
+      {partnerId && <div className="mb-6 rounded-xl border border-border p-4" role="status">
+        <p>{loadingPreference ? "Consultando sua preferência…" : preferred ? `Preferência: ${preferred.partner.tradeName}. Sujeita à confirmação para as datas solicitadas.` : "Não foi possível confirmar sua preferência. Você pode removê-la e solicitar outras opções."}</p>
+        <button type="button" onClick={() => setParams({})} className="mt-2 text-brand underline">Remover preferência</button>
+      </div>}
 
       {/* Progress */}
       <div className="mb-8">
@@ -110,7 +134,7 @@ export function RequestWizard() {
           <span className="font-medium text-ink">
             Etapa {step + 1} de {STEPS.length}
           </span>
-          <span className="text-muted">{STEPS[step]}</span>
+          <span className="text-muted" aria-live="polite">{STEPS[step]}</span>
         </div>
         <div className="mt-3 flex gap-1.5">
           {STEPS.map((_, i) => (
@@ -125,14 +149,21 @@ export function RequestWizard() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={(event) => {
+        if (step < 3) { event.preventDefault(); void next(); }
+        else void handleSubmit(onSubmit, (invalid) => {
+          const invalidStep = stepFields.findIndex(fields => fields.some(field => invalid[field]));
+          if (invalidStep >= 0) setStep(invalidStep);
+          heading.current?.focus();
+        })(event);
+      }} noValidate>
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 16 }}
+            initial={reduceMotion ? false : { opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: reduceMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             {step === 0 && (
               <div className="space-y-5">
@@ -148,7 +179,9 @@ export function RequestWizard() {
                         <Input
                           placeholder="00.000.000/0000-00"
                           inputMode="numeric"
-                          value={field.value}
+                           value={field.value}
+                           ref={field.ref}
+                           onBlur={field.onBlur}
                           onChange={(e) => field.onChange(maskCnpj(e.target.value))}
                         />
                       )}
@@ -209,6 +242,7 @@ export function RequestWizard() {
                         type="button"
                         key={opt}
                         onClick={() => toggleArray("accommodationPreference", opt)}
+                        aria-pressed={preferences.includes(opt)}
                         className={cn(
                           "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                           preferences.includes(opt)
@@ -221,7 +255,7 @@ export function RequestWizard() {
                     ))}
                   </div>
                   {errorFor("accommodationPreference") && (
-                    <p className="mt-2 text-xs font-medium text-red-600">
+                    <p role="alert" className="mt-2 text-xs font-medium text-red-600">
                       {errorFor("accommodationPreference")}
                     </p>
                   )}
@@ -235,6 +269,7 @@ export function RequestWizard() {
                         type="button"
                         key={s.value}
                         onClick={() => toggleArray("services", s.value)}
+                        aria-pressed={services.includes(s.value)}
                         className={cn(
                           "flex items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-colors",
                           services.includes(s.value)
@@ -278,7 +313,9 @@ export function RequestWizard() {
                       render={({ field }) => (
                         <Input
                           placeholder="(64) 90000-0000"
-                          inputMode="tel"
+                           inputMode="tel"
+                           ref={field.ref}
+                           onBlur={field.onBlur}
                           value={field.value}
                           onChange={(e) => field.onChange(maskPhone(e.target.value))}
                         />
@@ -300,12 +337,12 @@ export function RequestWizard() {
                     <>
                       Autorizo o contato da empresa para atendimento desta
                       solicitação e concordo com o tratamento dos dados conforme a{" "}
-                      <Link to="/privacidade" className="font-medium text-brand underline">
-                        Política de Privacidade
+                      <Link to="/privacidade" target="_blank" rel="noreferrer" className="font-medium text-brand underline">
+                        Política de Privacidade (nova aba)
                       </Link>{" "}
                       e os{" "}
-                      <Link to="/termos" className="font-medium text-brand underline">
-                        Termos de Uso
+                      <Link to="/termos" target="_blank" rel="noreferrer" className="font-medium text-brand underline">
+                        Termos de Uso (nova aba)
                       </Link>
                       .
                     </>
@@ -316,6 +353,7 @@ export function RequestWizard() {
           </motion.div>
         </AnimatePresence>
 
+        {submitError && <p role="alert" className="mt-6 text-red-600">{submitError} Seus dados continuam preenchidos; tente enviar novamente.</p>}
         <div className="mt-10 flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <Button type="button" variant="ghost" onClick={back} disabled={step === 0} className={cn(step === 0 && "invisible")}>
             <ArrowLeft size={16} />
@@ -327,7 +365,7 @@ export function RequestWizard() {
               <ArrowRight size={16} />
             </Button>
           ) : (
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || Boolean(partnerId && (loadingPreference || preferenceError))}>
               {submitting ? <SpinnerGap size={16} className="animate-spin" /> : null}
               {submitting ? "Enviando..." : "Solicitar cotação"}
             </Button>
@@ -358,15 +396,6 @@ export function RequestWizard() {
             >
               Voltar para página inicial
             </Link>
-            <a
-              href="https://wa.me/5500000000000"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
-            >
-                <WhatsappLogo size={18} weight="fill" />
-              Falar pelo WhatsApp
-            </a>
           </div>
         </div>
       </Modal>
