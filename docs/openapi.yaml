@@ -375,6 +375,18 @@ paths:
           description: Dados inválidos
         "404":
           description: Não encontrado
+    delete:
+      tags: [Admin]
+      summary: Exclui o parceiro (quartos, comodidades e fotos em cascata)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "204":
+          description: Parceiro excluído
+        "404":
+          description: Não encontrado
+        "409":
+          description: Parceiro com negociações, propostas ou contratos vinculados (inative em vez de excluir)
     patch:
       tags: [Admin]
       summary: "Atualiza parceiro (ex.: aprovar, alterar categoria)"

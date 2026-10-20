@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "@phosphor-icons/react";
+import { CheckCircle, Eye, Image, PencilSimple, Plus, SpinnerGap, Trash } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
 import type { Partner, PartnerStatus } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,6 +9,8 @@ import { Badge, partnerTone } from "@/components/ui/Badge";
 import { PARTNER_CATEGORY_LABEL, PARTNER_STATUS_LABEL, SERVICE_LABEL } from "@/lib/constants";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Select } from "@/components/ui/fields";
+import { Modal } from "@/components/ui/Modal";
+import { RowActions, type RowAction } from "@/components/admin/RowActions";
 import { PartnerFilters, usePartnerFilters } from "@/components/partners/PartnerFilters";
 import { maskCnpj } from "@/lib/masks";
 import { cn } from "@/lib/cn";
@@ -33,6 +35,8 @@ export function Parceiros() {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
+
+  const [toDelete, setToDelete] = useState<Partner | null>(null);
 
   const filters = usePartnerFilters(data?.partners ?? [], adminSearchText);
   const [status, setStatus] = useState<PartnerStatus | "">("");
@@ -155,11 +159,29 @@ export function Parceiros() {
                         <Badge tone={partnerTone(p.status)}>{PARTNER_STATUS_LABEL[p.status]}</Badge>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        {p.status === "PENDING" && (
-                          <Button size="sm" variant="accent" onClick={() => approve.mutate(p.id)}>
-                            Aprovar
-                          </Button>
-                        )}
+                        <RowActions
+                          label={`Ações de ${p.tradeName}`}
+                          actions={[
+                            { label: "Ver cadastro", icon: <Eye size={16} />, to: `/admin/parceiros/${p.id}` },
+                            { label: "Fotos", icon: <Image size={16} />, to: `/admin/parceiros/${p.id}#fotos` },
+                            { label: "Editar", icon: <PencilSimple size={16} />, to: `/admin/parceiros/${p.id}/editar` },
+                            ...(p.status === "PENDING"
+                              ? [
+                                  {
+                                    label: "Aprovar",
+                                    icon: <CheckCircle size={16} />,
+                                    onClick: () => approve.mutate(p.id),
+                                  } satisfies RowAction,
+                                ]
+                              : []),
+                            {
+                              label: "Excluir",
+                              icon: <Trash size={16} />,
+                              danger: true,
+                              onClick: () => setToDelete(p),
+                            },
+                          ]}
+                        />
                       </td>
                     </tr>
                   );
@@ -169,6 +191,56 @@ export function Parceiros() {
           </table>
         </div>
       </div>
+
+      <DeletePartnerModal partner={toDelete} onClose={() => setToDelete(null)} />
     </div>
+  );
+}
+
+function DeletePartnerModal({ partner, onClose }: { partner: Partner | null; onClose: () => void }) {
+  const qc = useQueryClient();
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/admin/partners/${id}`),
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: ["partner", id] });
+      qc.invalidateQueries({ queryKey: ["partners"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      onClose();
+    },
+  });
+
+  const close = () => {
+    if (remove.isPending) return;
+    remove.reset();
+    onClose();
+  };
+
+  return (
+    <Modal open={partner !== null} onClose={close} title="Excluir parceiro">
+      {partner && (
+        <div>
+          <p className="text-sm leading-relaxed text-muted">
+            Tem certeza que deseja excluir <span className="font-semibold text-ink">{partner.tradeName}</span>?
+            Os quartos, comodidades e fotos também serão removidos. Esta ação não pode ser desfeita.
+          </p>
+          {remove.error && (
+            <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{remove.error.message}</p>
+          )}
+          <div className="mt-6 flex justify-end gap-3">
+            <Button variant="secondary" onClick={close} disabled={remove.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => remove.mutate(partner.id)}
+              disabled={remove.isPending}
+              variant="danger"
+            >
+              {remove.isPending ? <SpinnerGap size={16} className="animate-spin" /> : <Trash size={16} />}
+              Excluir
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }

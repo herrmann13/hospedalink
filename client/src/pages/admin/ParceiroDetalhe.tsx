@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { Image, PencilSimple, SpinnerGap, X } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -45,6 +45,12 @@ export function ParceiroDetalhe() {
   });
 
   const partner = data?.partner;
+  const { hash } = useLocation();
+
+  // Menu "Fotos" da listagem abre esta página em #fotos.
+  useEffect(() => {
+    if (partner && hash) document.querySelector(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [partner, hash]);
 
   const onPartnerSaved = (saved: Partner) => {
     qc.setQueryData(["partner", id], { partner: saved });
@@ -164,7 +170,7 @@ export function ParceiroDetalhe() {
             <p className="text-sm leading-relaxed text-muted">{partner.notes || "Sem observações."}</p>
           </Section>
 
-          <Section title="Fotos">
+          <Section title="Fotos" id="fotos">
             <PartnerPhotos partner={partner} onSaved={onPartnerSaved} />
           </Section>
         </div>
@@ -173,9 +179,9 @@ export function ParceiroDetalhe() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border bg-white p-6">
+    <div id={id} className="scroll-mt-24 rounded-2xl border border-border bg-white p-6">
       <h2 className="mb-4 text-base font-semibold text-ink">{title}</h2>
       {children}
     </div>

@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline" | "accent";
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "accent" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -17,6 +17,7 @@ const variants: Record<Variant, string> = {
   outline:
     "border border-brand/30 text-brand hover:bg-brand hover:text-white",
   accent: "bg-accent text-white hover:bg-accent-strong shadow-soft",
+  danger: "bg-red-600 text-white hover:bg-red-700 shadow-soft",
 };
 
 const sizes: Record<Size, string> = {

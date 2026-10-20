@@ -90,6 +90,44 @@ router.put("/:id", async (req, res) => {
   res.json({ partner: serializePartner(partner) });
 });
 
+router.delete("/:id", async (req, res) => {
+  const partner = await prisma.partner.findUnique({
+    where: { id: req.params.id },
+    include: {
+      images: true,
+      _count: { select: { negotiations: true, proposals: true, contracts: true } },
+    },
+  });
+  if (!partner) {
+    res.status(404).json({ error: "Parceiro não encontrado." });
+    return;
+  }
+
+  // Negociações, propostas e contratos guardam o histórico comercial; nesses casos, inative.
+  const { negotiations, proposals, contracts } = partner._count;
+  if (negotiations + proposals + contracts > 0) {
+    res.status(409).json({
+      error:
+        "Este parceiro tem negociações, propostas ou contratos vinculados e não pode ser excluído. Altere o status para Inativo.",
+    });
+    return;
+  }
+
+  // Quartos, comodidades e fotos são removidos em cascata.
+  await prisma.partner.delete({ where: { id: partner.id } });
+
+  if (storageEnabled) {
+    const keys = partner.images.map((img) => img.imageUrl).filter((url) => !isExternalUrl(url));
+    await Promise.all(
+      keys.map((key) =>
+        deleteObject(key).catch((error) => console.error("Falha ao remover imagem do bucket:", error)),
+      ),
+    );
+  }
+
+  res.status(204).end();
+});
+
 const patchSchema = z.object({
   status: partnerStatusSchema.optional(),
   category: partnerCategorySchema.optional(),

@@ -117,6 +117,7 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 | `/admin/solicitacoes` | Lista de solicitações |
 | `/admin/solicitacoes/:id` | Detalhe da solicitação (status, negociações, propostas, contrato) |
 | `/admin/parceiros` | Lista de parceiros com abas por categoria, busca (nome, endereço, responsável, CNPJ) e filtros por nº de pessoas, status e comodidades |
+| `/admin/parceiros` (menu ⋮ de cada linha) | Ver cadastro, Fotos, Editar, Aprovar (pendentes) e Excluir |
 | `/admin/parceiros/novo` | Cadastro de parceiro (somente pela equipe interna) |
 | `/admin/parceiros/:id` | Detalhe do parceiro (aprovação, categoria, quartos, serviços, upload/remoção de fotos) |
 | `/admin/parceiros/:id/editar` | Edição completa do parceiro |
@@ -195,6 +196,7 @@ Todos os endpoints administrativos exigem o cookie de sessão (JWT) obtido em `P
 | POST | `/api/admin/partners` | Cadastra parceiro |
 | PUT | `/api/admin/partners/:id` | Atualiza todos os dados do parceiro (substitui quartos e comodidades) |
 | PATCH | `/api/admin/partners/:id` | Atualiza parceiro (ex.: aprovar, alterar categoria) |
+| DELETE | `/api/admin/partners/:id` | Exclui parceiro, quartos, comodidades e fotos (409 se houver negociações, propostas ou contratos) |
 | POST | `/api/admin/partners/:id/images` | Envia uma foto (corpo binário, `Content-Type: image/jpeg|png|webp`, máx. 5 MB) |
 | DELETE | `/api/admin/partners/:id/images/:imageId` | Remove uma foto (do banco e do bucket) |
 | GET | `/api/admin/negotiations` | Lista negociações |
