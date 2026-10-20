@@ -19,10 +19,10 @@ O sistema **não** faz reserva automática, não exibe estabelecimentos publicam
 | Camada | Tecnologia | Local |
 |---|---|---|
 | Frontend | React 19 + Vite + TypeScript + Tailwind CSS v4 + React Router v7 + TanStack Query + React Hook Form + Zod + motion + Phosphor Icons | `client/` |
-| Backend | Express 5 + Prisma + SQLite + jose (JWT) + bcryptjs + Zod | `server/` |
+| Backend | Express 5 + Prisma + PostgreSQL + jose (JWT) + bcryptjs + Zod | `server/` |
 | Gerenciador | Bun (runtime + package manager) | monorepo na raiz |
 
-O banco é **SQLite** (arquivo `server/prisma/dev.db`) nesta versão de prova de conceito. A migração para PostgreSQL em produção exige apenas trocar `provider` e `DATABASE_URL` em `server/prisma/schema.prisma` e `server/.env`.
+O banco é **PostgreSQL**, hospedado no Railway (serviço `Postgres`). O desenvolvimento local também conecta nesse banco pela URL pública (`DATABASE_PUBLIC_URL`). **Atenção:** os dados locais são os dados reais; evite testes destrutivos.
 
 ---
 
@@ -36,7 +36,8 @@ O banco é **SQLite** (arquivo `server/prisma/dev.db`) nesta versão de prova de
 
 ```bash
 bun install          # instala as dependências dos dois workspaces
-bun run db:reset     # cria o banco SQLite e roda o seed (dados de demonstração)
+cp server/.env.example server/.env   # e preencha (veja abaixo)
+bun run db:migrate   # aplica as migrations pendentes (normalmente nenhuma)
 bun run dev          # sobe frontend (Vite :5173) e API (Express :3001)
 ```
 
@@ -45,21 +46,47 @@ bun run dev          # sobe frontend (Vite :5173) e API (Express :3001)
 | Comando | O que faz |
 |---|---|
 | `bun run dev` | Sobe frontend + backend em modo desenvolvimento |
-| `bun start` | Aplica o schema, inicializa o seed se necessário e sobe o servidor de produção |
+| `bun start` | Aplica as migrations (`prisma migrate deploy`), inicializa o seed se necessário e sobe o servidor de produção |
 | `bun run build` | Gera o client de produção e o Prisma Client |
-| `bun run db:push` | Aplica o schema atual ao banco |
-| `bun run db:seed` | Roda o seed |
-| `bun run db:reset` | Recria o banco e roda o seed (estado limpo de demonstração) |
+| `bun run db:migrate` | Aplica as migrations pendentes de `server/prisma/migrations` |
+| `bun run db:seed` | Cria o admin inicial (se ainda não existir) e a taxa de captação padrão |
 
 ### Acessos
 
 - **Site:** http://localhost:5173
 - **Painel administrativo:** http://localhost:5173/admin
-- **Login do admin (seed):** `admin@hospedalink.com.br` / `admin123`
+- **Login do admin:** e-mail de `ADMIN_EMAIL` (padrão `admin@hospedalink.com.br`) e senha de `ADMIN_PASSWORD`, definidos no Railway
 
-O `server/.env` contém `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN` e `PORT`. Este arquivo é ignorado pelo git (`.env*`) e deve ser recriado em um clone novo. Use `server/.env.example` como referência. Em produção, `JWT_SECRET` e `CLIENT_ORIGIN` são obrigatórios. O segredo deve ser uma chave longa e aleatória, e `CLIENT_ORIGIN` deve conter apenas a URL pública do frontend.
+O `server/.env` contém `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN` e `PORT`. Este arquivo é ignorado pelo git (`.env*`) e deve ser recriado em um clone novo. Use `server/.env.example` como referência (versionado, com todas as variáveis comentadas). Para obter a URL do banco: `railway variables --service Postgres` (campo `DATABASE_PUBLIC_URL`). Em produção, `JWT_SECRET` e `CLIENT_ORIGIN` são obrigatórios. O segredo deve ser uma chave longa e aleatória, e `CLIENT_ORIGIN` deve conter apenas a URL pública do frontend.
 
 No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e expõe `/api/health` como health check. As variáveis de produção devem ser configuradas no serviço, nunca no frontend.
+
+---
+
+### Variáveis de ambiente
+
+| Variável | Obrigatória | Railway (`web`) | Local (`server/.env`) |
+|---|---|---|---|
+| `DATABASE_URL` | Sim | `${{Postgres.DATABASE_URL}}` (rede interna) | `DATABASE_PUBLIC_URL` do serviço Postgres |
+| `JWT_SECRET` | Sim | Chave aleatória (`openssl rand -hex 32`) | Chave aleatória própria |
+| `CLIENT_ORIGIN` | Em produção | `https://web-production-cc741.up.railway.app` | `http://localhost:5173` |
+| `PORT` | Não | Definida pelo Railway | `3001` |
+| `ADMIN_EMAIL` | Não | `admin@hospedalink.com.br` | Mesmo valor |
+| `ADMIN_PASSWORD` | No primeiro seed | Senha forte (mín. 12 caracteres) | Não necessária depois do primeiro seed |
+| `NODE_ENV` | — | `production` (definida no `Dockerfile`) | — |
+
+### Alterando o schema (migrations)
+
+O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate dev`/`reset`, pois o banco do dev é o de produção.
+
+1. Edite `server/prisma/schema.prisma`.
+2. Gere o SQL comparando o banco atual com o schema:
+   ```bash
+   mkdir server/prisma/migrations/<N>_<descricao>
+   bun run --cwd server db:migrate:diff > server/prisma/migrations/<N>_<descricao>/migration.sql
+   ```
+3. Revise o SQL (atenção a `DROP COLUMN`/`DROP TABLE`, que apagam dados).
+4. Faça commit da migration. O deploy no Railway aplica automaticamente (`bun start` → `prisma migrate deploy`). Para aplicar antes, rode `bun run db:migrate`.
 
 ---
 
@@ -83,8 +110,8 @@ No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e 
 | `/admin` | Dashboard com métricas da operação |
 | `/admin/solicitacoes` | Lista de solicitações |
 | `/admin/solicitacoes/:id` | Detalhe da solicitação (status, negociações, propostas, contrato) |
-| `/admin/parceiros` | Lista de parceiros |
-| `/admin/parceiros/:id` | Detalhe do parceiro (aprovação, quartos, serviços) |
+| `/admin/parceiros` | Lista de parceiros com abas por categoria, busca (nome, endereço, responsável, CNPJ) e filtros por nº de pessoas, status e comodidades |
+| `/admin/parceiros/:id` | Detalhe do parceiro (aprovação, categoria, quartos, serviços) |
 | `/admin/negociacoes` | Negociações em andamento |
 | `/admin/contratos` | Contratos fechados |
 | `/admin/configuracoes` | Taxa de captação padrão |
@@ -104,7 +131,7 @@ No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e 
 ### 5.2 Fluxo do estabelecimento parceiro
 
 1. Acessa `/seja-parceiro`.
-2. Informa dados básicos, estrutura (tipos de quarto), condições comerciais, serviços e fotos.
+2. Informa dados básicos (incluindo a categoria do estabelecimento), estrutura (tipos de quarto), condições comerciais, serviços e fotos.
 3. O cadastro é criado com status **PENDENTE**.
 4. A equipe interna aprova (ou recusa) em `/admin/parceiros`.
 
@@ -152,7 +179,7 @@ Todos os endpoints administrativos exigem o cookie de sessão (JWT) obtido em `P
 | POST | `/api/admin/requests/:id/proposals` | Cria proposta (com cálculo automático) |
 | GET | `/api/admin/partners` | Lista parceiros |
 | GET | `/api/admin/partners/:id` | Detalhe do parceiro |
-| PATCH | `/api/admin/partners/:id` | Atualiza parceiro (ex.: aprovar) |
+| PATCH | `/api/admin/partners/:id` | Atualiza parceiro (ex.: aprovar, alterar categoria) |
 | GET | `/api/admin/negotiations` | Lista negociações |
 | PATCH | `/api/admin/negotiations/:id` | Atualiza status da negociação |
 | GET | `/api/admin/contracts` | Lista contratos |
@@ -187,8 +214,8 @@ Definido em `server/prisma/schema.prisma`.
 ### Campos principais
 
 - **Company:** `legalName`, `tradeName`, `cnpj`, `contactName`, `contactRole`, `contactEmail`, `contactPhone`.
-- **AccommodationRequest:** `protocol` (ex.: `SOL-000005`), `companyId`, `numberOfGuests`, `checkIn`, `checkOut`, `workLocation`, `accommodationPreference` (JSON), `budgetRange`, `notes`, `internalNotes`, `status`.
-- **Partner:** `legalName`, `tradeName`, `cnpj`, `contactName`, `phone`, `whatsapp`, `email`, `address`, `availableCapacity`, `status`, `notes`.
+- **AccommodationRequest:** `protocol` (ex.: `SOL-000005`), `companyId`, `numberOfGuests`, `checkIn`, `checkOut`, `workLocation`, `accommodationPreference` (array de texto), `budgetRange`, `notes`, `internalNotes`, `status`.
+- **Partner:** `legalName`, `tradeName`, `cnpj`, `contactName`, `phone`, `whatsapp`, `email`, `address`, `category`, `availableCapacity`, `status`, `notes`.
 - **RoomType:** `name`, `quantity`, `bedsPerRoom`, `priceType` (`DIARIA`/`PESSOA`/`QUARTO`/`SEMANAL`/`MENSAL`), `price`.
 - **Proposal:** `amount`, `commission`, `totalAmount`, `commissionPercentage`, `numberOfGuests`, `numberOfDays`, `dailyRate`.
 - **Contract:** `accommodationAmount`, `commissionPercentage`, `commissionAmount`, `totalAmount`, `status`.
@@ -197,11 +224,13 @@ Definido em `server/prisma/schema.prisma`.
 
 ## 8. Status e enums
 
-> Os status são armazenados como `String` (não enums do banco) para manter a compatibilidade com SQLite e simplificar a migração para PostgreSQL. Os rótulos em português ficam em `client/src/lib/constants.ts`.
+> Os status são armazenados como `String` (não enums do banco) para manter a portabilidade entre bancos. Os rótulos em português ficam em `client/src/lib/constants.ts`.
 
 **Solicitação (`RequestStatus`):** `NOVA`, `EM_ANALISE`, `BUSCANDO_HOSPEDAGEM`, `PROPOSTA_ENVIADA`, `EM_NEGOCIACAO`, `APROVADA`, `CONTRATO_FECHADO`, `CANCELADA`.
 
 **Parceiro (`PartnerStatus`):** `PENDING`, `ACTIVE`, `INACTIVE`.
+
+**Categoria do parceiro (`PartnerCategory`):** `HOTEL`, `POUSADA`, `ALOJAMENTO`, `APART_HOTEL`, `HOSTEL`, `CASA` (padrão `HOTEL`).
 
 **Negociação (`NegotiationStatus`):** `AGUARDANDO_RETORNO`, `DISPONIVEL`, `INDISPONIVEL`, `NEGOCIANDO`, `SELECIONADO`, `RECUSADO`.
 
@@ -209,7 +238,7 @@ Definido em `server/prisma/schema.prisma`.
 
 **Contrato (`ContractStatus`):** `AGUARDANDO_ASSINATURA`, `ATIVO`, `FINALIZADO`, `CANCELADO`.
 
-**Serviços (`RequirementType`):** `BREAKFAST`, `LUNCH`, `DINNER`, `LAUNDRY`, `PARKING`, `WIFI`, `AIR_CONDITIONING`, `KITCHEN`, `RECEPTION_24H`, `OTHER`.
+**Serviços (`RequirementType`):** `BREAKFAST`, `LUNCH`, `DINNER`, `LAUNDRY`, `PARKING`, `WIFI`, `AIR_CONDITIONING`, `KITCHEN`, `RECEPTION_24H`, `PRIVATE_BATHROOM`, `TV`, `MINIBAR`, `DAILY_CLEANING`, `BED_LINEN`, `EARLY_BREAKFAST`, `PACKED_MEAL`, `LARGE_VEHICLE_PARKING`, `MEETING_ROOM`, `ACCESSIBILITY`, `INVOICE`, `OTHER`.
 
 ---
 
@@ -225,17 +254,14 @@ Definido em `server/prisma/schema.prisma`.
 
 ---
 
-## 10. Cenário de demonstração (seed)
+## 10. Dados iniciais (seed)
 
-O seed (`server/prisma/seed.ts`) cria:
+O seed (`server/prisma/seed.ts`) roda no `bun start` e é idempotente. Ele cria apenas:
 
-- **Admin:** `admin@hospedalink.com.br` / `admin123`.
-- **Parceiros:** Hotel Executivo Jataí (ativo), Alojamento Central (ativo), Hotel Business (pendente).
-- **Cenário principal:** Construtora Horizonte Ltda. — 12 colaboradores, 01/10 a 21/10 (20 dias), café da manhã, lavanderia e estacionamento, preferência por quarto duplo. Parceiro selecionado: Hotel Executivo Jataí, a R$ 80/pessoa/dia:
-  - Hospedagem: `12 × 20 × R$ 80 = R$ 19.200`
-  - Taxa de captação (10%): `R$ 1.920`
-  - Total negociado: `R$ 21.120`
-- **Solicitações adicionais** para preencher o dashboard.
+- **Admin:** e-mail `ADMIN_EMAIL` (padrão `admin@hospedalink.com.br`) com senha `ADMIN_PASSWORD` (obrigatória, mínimo de 12 caracteres).
+- **Taxa de captação padrão:** 10% (`Setting.commissionRate`).
+
+Não há dados de demonstração: parceiros, empresas e solicitações são cadastrados pelos fluxos reais.
 
 Novas solicitações recebem protocolos sequenciais. O backend possui retry para colisões de protocolo quando duas empresas enviam o formulário ao mesmo tempo.
 
@@ -246,7 +272,7 @@ Novas solicitações recebem protocolos sequenciais. O backend possui retry para
 | Onde | O que |
 |---|---|
 | `/admin/configuracoes` | Taxa de captação padrão (armazenada em `Setting`) |
-| `server/.env` | `DATABASE_URL`, `JWT_SECRET`, `PORT` |
+| `server/.env` / Railway | `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN`, `PORT`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` |
 
 ---
 

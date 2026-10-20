@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { serializePartner } from "../../lib/serialize";
 import { requireAuth } from "../../middleware/auth";
-import { partnerStatusSchema } from "../../lib/statuses";
+import { partnerCategorySchema, partnerStatusSchema } from "../../lib/statuses";
 
 const router = Router();
 router.use(requireAuth);
@@ -30,6 +30,7 @@ router.get("/:id", async (req, res) => {
 
 const patchSchema = z.object({
   status: partnerStatusSchema.optional(),
+  category: partnerCategorySchema.optional(),
   notes: z.string().optional(),
   availableCapacity: z.number().int().min(0).optional(),
 });
@@ -42,6 +43,7 @@ router.patch("/:id", async (req, res) => {
   }
   const data: Record<string, unknown> = {};
   if (parsed.data.status) data.status = parsed.data.status;
+  if (parsed.data.category) data.category = parsed.data.category;
   if (parsed.data.notes !== undefined) data.notes = parsed.data.notes;
   if (parsed.data.availableCapacity !== undefined)
     data.availableCapacity = parsed.data.availableCapacity;

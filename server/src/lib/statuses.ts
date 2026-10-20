@@ -13,6 +13,15 @@ export const requestStatusSchema = z.enum([
 
 export const partnerStatusSchema = z.enum(["PENDING", "ACTIVE", "INACTIVE"]);
 
+export const partnerCategorySchema = z.enum([
+  "HOTEL",
+  "POUSADA",
+  "ALOJAMENTO",
+  "APART_HOTEL",
+  "HOSTEL",
+  "CASA",
+]);
+
 export const negotiationStatusSchema = z.enum([
   "AGUARDANDO_RETORNO",
   "DISPONIVEL",

@@ -46,7 +46,7 @@ function serializeRequestBase(request: Prisma.AccommodationRequestGetPayload<{}>
     checkIn: request.checkIn.toISOString(),
     checkOut: request.checkOut.toISOString(),
     workLocation: request.workLocation,
-    accommodationPreference: parseArray(request.accommodationPreference),
+    accommodationPreference: request.accommodationPreference,
     budgetRange: request.budgetRange,
     notes: request.notes,
     internalNotes: request.internalNotes,
@@ -149,6 +149,7 @@ export function serializePartner(partner: PartnerFull) {
     whatsapp: partner.whatsapp,
     email: partner.email,
     address: partner.address,
+    category: partner.category,
     latitude: partner.latitude,
     longitude: partner.longitude,
     availableCapacity: partner.availableCapacity,
@@ -227,14 +228,4 @@ export function serializeContract(contract: ContractRecord) {
       protocol: contract.request.protocol,
     },
   };
-}
-
-export function parseArray(value: string | null | undefined): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
 }

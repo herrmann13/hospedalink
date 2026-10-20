@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Company {
-  id           String                @id @default(cuid())
+  id           String                 @id @default(cuid())
   legalName    String
   tradeName    String
   cnpj         String
@@ -16,32 +16,35 @@ model Company {
   contactRole  String?
   contactEmail String
   contactPhone String
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
   requests     AccommodationRequest[]
   contracts    Contract[]
 }
 
 model AccommodationRequest {
-  id                     String                    @id @default(cuid())
-  protocol               String                    @unique
-  companyId              String
-  company                Company                   @relation(fields: [companyId], references: [id])
-  numberOfGuests         Int
-  checkIn                DateTime
-  checkOut               DateTime
-  workLocation           String?
-  accommodationPreference String
-  budgetRange            String?
-  notes                  String?
-  internalNotes          String?
-  status                 String                    @default("NOVA")
-  createdAt              DateTime                  @default(now())
-  updatedAt              DateTime                  @updatedAt
-  requirements           AccommodationRequirement[]
-  negotiations           Negotiation[]
-  proposals              Proposal[]
-  contracts              Contract[]
+  id                      String                     @id @default(cuid())
+  protocol                String                     @unique
+  companyId               String
+  company                 Company                    @relation(fields: [companyId], references: [id])
+  numberOfGuests          Int
+  checkIn                 DateTime
+  checkOut                DateTime
+  workLocation            String?
+  accommodationPreference String[]
+  budgetRange             String?
+  notes                   String?
+  internalNotes           String?
+  status                  String                     @default("NOVA")
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  requirements            AccommodationRequirement[]
+  negotiations            Negotiation[]
+  proposals               Proposal[]
+  contracts               Contract[]
+
+  @@index([companyId])
+  @@index([status])
 }
 
 model AccommodationRequirement {
@@ -50,10 +53,12 @@ model AccommodationRequirement {
   request   AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   type      String
   value     String?
+
+  @@index([requestId])
 }
 
 model Partner {
-  id                String          @id @default(cuid())
+  id                String           @id @default(cuid())
   legalName         String
   tradeName         String
   cnpj              String
@@ -62,19 +67,24 @@ model Partner {
   whatsapp          String?
   email             String
   address           String
+  // HOTEL | POUSADA | ALOJAMENTO | APART_HOTEL | HOSTEL | CASA
+  category          String           @default("HOTEL")
   latitude          Float?
   longitude         Float?
   availableCapacity Int
-  status            String          @default("PENDING")
+  status            String           @default("PENDING")
   notes             String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   roomTypes         RoomType[]
   services          PartnerService[]
   images            PartnerImage[]
   negotiations      Negotiation[]
   proposals         Proposal[]
   contracts         Contract[]
+
+  @@index([status])
+  @@index([category])
 }
 
 model RoomType {
@@ -87,6 +97,8 @@ model RoomType {
   priceType   String
   price       Float
   notes       String?
+
+  @@index([partnerId])
 }
 
 model PartnerService {
@@ -94,6 +106,8 @@ model PartnerService {
   partnerId   String
   partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   serviceType String
+
+  @@index([partnerId])
 }
 
 model PartnerImage {
@@ -102,69 +116,83 @@ model PartnerImage {
   partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   imageUrl  String
   sortOrder Int     @default(0)
+
+  @@index([partnerId])
 }
 
 model Negotiation {
-  id                 String               @id @default(cuid())
-  requestId          String
-  request            AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  partnerId          String
-  partner            Partner              @relation(fields: [partnerId], references: [id])
-  status             String               @default("AGUARDANDO_RETORNO")
-  offeredDailyRate   Float?
-  numberOfGuests     Int?
-  numberOfDays       Int?
-  accommodationValue Float?
+  id                   String               @id @default(cuid())
+  requestId            String
+  request              AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId            String
+  partner              Partner              @relation(fields: [partnerId], references: [id])
+  status               String               @default("AGUARDANDO_RETORNO")
+  offeredDailyRate     Float?
+  numberOfGuests       Int?
+  numberOfDays         Int?
+  accommodationValue   Float?
   commissionPercentage Float?
-  commissionValue    Float?
-  notes              String?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  proposals          Proposal[]
+  commissionValue      Float?
+  notes                String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  proposals            Proposal[]
+
+  @@index([requestId])
+  @@index([partnerId])
 }
 
 model Proposal {
-  id                  String      @id @default(cuid())
-  negotiationId       String?
-  negotiation         Negotiation? @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
-  requestId           String
-  request             AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  partnerId           String
-  partner             Partner     @relation(fields: [partnerId], references: [id])
-  amount              Float
-  commission          Float
-  totalAmount         Float
+  id                   String               @id @default(cuid())
+  negotiationId        String?
+  negotiation          Negotiation?         @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  requestId            String
+  request              AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId            String
+  partner              Partner              @relation(fields: [partnerId], references: [id])
+  amount               Float
+  commission           Float
+  totalAmount          Float
   commissionPercentage Float?
-  numberOfGuests      Int?
-  numberOfDays        Int?
-  dailyRate           Float?
-  servicesDescription String?
-  notes               String?
-  status              String      @default("ABERTA")
-  createdAt           DateTime    @default(now())
-  contract            Contract?
+  numberOfGuests       Int?
+  numberOfDays         Int?
+  dailyRate            Float?
+  servicesDescription  String?
+  notes                String?
+  status               String               @default("ABERTA")
+  createdAt            DateTime             @default(now())
+  contract             Contract?
+
+  @@index([requestId])
+  @@index([partnerId])
+  @@index([negotiationId])
 }
 
 model Contract {
-  id                  String               @id @default(cuid())
-  requestId           String
-  request             AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  proposalId          String               @unique
-  proposal            Proposal             @relation(fields: [proposalId], references: [id])
-  companyId           String
-  company             Company              @relation(fields: [companyId], references: [id])
-  partnerId           String
-  partner             Partner              @relation(fields: [partnerId], references: [id])
-  checkIn             DateTime
-  checkOut            DateTime
-  numberOfGuests      Int
-  accommodationAmount Float
+  id                   String               @id @default(cuid())
+  requestId            String
+  request              AccommodationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  proposalId           String               @unique
+  proposal             Proposal             @relation(fields: [proposalId], references: [id])
+  companyId            String
+  company              Company              @relation(fields: [companyId], references: [id])
+  partnerId            String
+  partner              Partner              @relation(fields: [partnerId], references: [id])
+  checkIn              DateTime
+  checkOut             DateTime
+  numberOfGuests       Int
+  accommodationAmount  Float
   commissionPercentage Float
-  commissionAmount    Float
-  totalAmount         Float
-  status              String               @default("AGUARDANDO_ASSINATURA")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  commissionAmount     Float
+  totalAmount          Float
+  status               String               @default("AGUARDANDO_ASSINATURA")
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([requestId])
+  @@index([companyId])
+  @@index([partnerId])
+  @@index([status])
 }
 
 model AdminUser {

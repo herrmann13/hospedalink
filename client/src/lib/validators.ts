@@ -66,6 +66,7 @@ export const partnerSchema = z.object({
   whatsapp: z.string().optional().or(z.literal("")),
   email,
   address: z.string().min(3, "Informe o endereço"),
+  category: z.string().min(1, "Selecione a categoria"),
   availableCapacity: z.coerce.number().int().min(1, "Informe a capacidade"),
   roomTypes: z
     .array(

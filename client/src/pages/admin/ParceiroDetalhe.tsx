@@ -2,11 +2,18 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatBRL } from "@/lib/masks";
-import type { Partner } from "@/lib/types";
+import type { Partner, PartnerCategory } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Badge, partnerTone } from "@/components/ui/Badge";
-import { PARTNER_STATUS_LABEL, SERVICE_LABEL, PRICE_TYPES } from "@/lib/constants";
+import {
+  PARTNER_CATEGORIES,
+  PARTNER_CATEGORY_LABEL,
+  PARTNER_STATUS_LABEL,
+  SERVICE_LABEL,
+  PRICE_TYPES,
+} from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/fields";
 
 export function ParceiroDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +30,14 @@ export function ParceiroDetalhe() {
       qc.invalidateQueries({ queryKey: ["partner", id] });
       qc.invalidateQueries({ queryKey: ["partners"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  const setCategory = useMutation({
+    mutationFn: (category: PartnerCategory) => api.patch(`/api/admin/partners/${id}`, { category }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["partner", id] });
+      qc.invalidateQueries({ queryKey: ["partners"] });
     },
   });
 
@@ -64,6 +79,23 @@ export function ParceiroDetalhe() {
         <div className="space-y-6 lg:col-span-2">
           <Section title="Dados">
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-muted">Categoria</dt>
+                <dd className="mt-1">
+                  <Select
+                    value={partner.category}
+                    onChange={(e) => setCategory.mutate(e.target.value as PartnerCategory)}
+                    disabled={setCategory.isPending}
+                    className="h-9 text-sm"
+                  >
+                    {PARTNER_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {PARTNER_CATEGORY_LABEL[c]}
+                      </option>
+                    ))}
+                  </Select>
+                </dd>
+              </div>
               <Detail label="CNPJ" value={partner.cnpj} mono />
               <Detail label="Responsável" value={partner.contactName} />
               <Detail label="Telefone" value={partner.phone} />

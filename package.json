@@ -9,10 +9,9 @@
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"bun run --cwd server dev\" \"bun run --cwd client dev\"",
     "build": "bun run --cwd server build && bun run --cwd client build",
-    "start": "bun run --cwd server db:push && bun run --cwd server db:seed && bun run --cwd server start",
-    "db:push": "bun run --cwd server db:push",
-    "db:seed": "bun run --cwd server db:seed",
-    "db:reset": "bun run --cwd server db:reset"
+    "start": "bun run --cwd server db:migrate && bun run --cwd server db:seed && bun run --cwd server start",
+    "db:migrate": "bun run --cwd server db:migrate",
+    "db:seed": "bun run --cwd server db:seed"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

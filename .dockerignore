@@ -1,9 +1,10 @@
 node_modules
+**/node_modules
 client/dist
 client/.vite
-server/prisma/dev.db
-server/prisma/dev.db-journal
 .git
 .gitignore
-.env
+**/.env
+**/.env.*
+!**/.env.example
 *.log

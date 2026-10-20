@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bunx --bun prisma generate",
+    "db:migrate": "bunx --bun prisma migrate deploy",
+    "db:migrate:status": "bunx --bun prisma migrate status",
+    "db:migrate:diff": "bunx --bun prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script",
     "start": "bun src/index.ts",
-    "db:push": "bunx --bun prisma db push",
-    "db:seed": "bunx --bun prisma db seed",
-    "db:reset": "bunx --bun prisma db push --force-reset && bunx --bun prisma db seed"
+    "db:seed": "bunx --bun prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { generateProtocol, isUniqueConstraintError } from "../lib/protocol";
+import { partnerCategorySchema } from "../lib/statuses";
 
 const router = Router();
 
@@ -77,7 +78,7 @@ router.post("/requests", async (req, res) => {
           checkIn,
           checkOut,
           workLocation: data.workLocation || null,
-          accommodationPreference: JSON.stringify(data.accommodationPreference),
+          accommodationPreference: data.accommodationPreference,
           budgetRange: data.budgetRange || null,
           notes: data.notes || null,
           requirements: {
@@ -103,6 +104,7 @@ const partnerSchema = z.object({
   whatsapp: z.string().transform(onlyDigits).optional().default(""),
   email: z.string().email(),
   address: z.string().min(3),
+  category: partnerCategorySchema,
   availableCapacity: z.coerce.number().int().min(1),
   roomTypes: z
     .array(
@@ -141,6 +143,7 @@ router.post("/partners", async (req, res) => {
       whatsapp: data.whatsapp || null,
       email: data.email,
       address: data.address,
+      category: data.category,
       availableCapacity: data.availableCapacity,
       notes: [data.conditions, data.notes].filter(Boolean).join("\n") || null,
       roomTypes: {

@@ -1,4 +1,11 @@
-import type { NegotiationStatus, PartnerStatus, ProposalStatus, RequestStatus, ContractStatus } from "./types";
+import type {
+  NegotiationStatus,
+  PartnerCategory,
+  PartnerStatus,
+  ProposalStatus,
+  RequestStatus,
+  ContractStatus,
+} from "./types";
 
 export const REQUEST_STATUS_LABEL: Record<RequestStatus, string> = {
   NOVA: "Nova",
@@ -16,6 +23,17 @@ export const PARTNER_STATUS_LABEL: Record<PartnerStatus, string> = {
   ACTIVE: "Ativo",
   INACTIVE: "Inativo",
 };
+
+export const PARTNER_CATEGORY_LABEL: Record<PartnerCategory, string> = {
+  HOTEL: "Hotel",
+  POUSADA: "Pousada",
+  ALOJAMENTO: "Alojamento",
+  APART_HOTEL: "Apart-hotel / Flat",
+  HOSTEL: "Hostel",
+  CASA: "Casa / Apartamento",
+};
+
+export const PARTNER_CATEGORIES = Object.keys(PARTNER_CATEGORY_LABEL) as PartnerCategory[];
 
 export const NEGOTIATION_STATUS_LABEL: Record<NegotiationStatus, string> = {
   AGUARDANDO_RETORNO: "Aguardando retorno",
@@ -43,14 +61,25 @@ export const CONTRACT_STATUS_LABEL: Record<ContractStatus, string> = {
 
 export const SERVICES: { value: string; label: string }[] = [
   { value: "BREAKFAST", label: "Café da manhã" },
+  { value: "EARLY_BREAKFAST", label: "Café da manhã antecipado (antes das 6h)" },
   { value: "LUNCH", label: "Almoço" },
   { value: "DINNER", label: "Jantar" },
+  { value: "PACKED_MEAL", label: "Marmita / refeição para levar" },
+  { value: "KITCHEN", label: "Cozinha" },
+  { value: "AIR_CONDITIONING", label: "Ar-condicionado" },
+  { value: "PRIVATE_BATHROOM", label: "Banheiro privativo" },
+  { value: "TV", label: "TV no quarto" },
+  { value: "MINIBAR", label: "Frigobar" },
+  { value: "WIFI", label: "Wi-Fi" },
+  { value: "BED_LINEN", label: "Roupa de cama e banho" },
+  { value: "DAILY_CLEANING", label: "Limpeza diária" },
   { value: "LAUNDRY", label: "Lavanderia" },
   { value: "PARKING", label: "Estacionamento" },
-  { value: "WIFI", label: "Wi-Fi" },
-  { value: "AIR_CONDITIONING", label: "Ar-condicionado" },
-  { value: "KITCHEN", label: "Cozinha" },
+  { value: "LARGE_VEHICLE_PARKING", label: "Vaga para vans, ônibus e caminhões" },
   { value: "RECEPTION_24H", label: "Recepção 24h" },
+  { value: "MEETING_ROOM", label: "Sala de reunião" },
+  { value: "ACCESSIBILITY", label: "Acessibilidade" },
+  { value: "INVOICE", label: "Emite nota fiscal" },
 ];
 
 export const SERVICE_LABEL: Record<string, string> = Object.fromEntries(

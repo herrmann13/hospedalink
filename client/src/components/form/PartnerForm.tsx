@@ -8,7 +8,7 @@ import { Field, Input, Textarea, Select, Checkbox } from "@/components/ui/fields
 import { Modal } from "@/components/ui/Modal";
 import { partnerSchema, type PartnerFormValues } from "@/lib/validators";
 import { maskCnpj, maskPhone } from "@/lib/masks";
-import { PRICE_TYPES, SERVICES } from "@/lib/constants";
+import { PARTNER_CATEGORIES, PARTNER_CATEGORY_LABEL, PRICE_TYPES, SERVICES } from "@/lib/constants";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
@@ -44,6 +44,7 @@ export function PartnerForm() {
       whatsapp: "",
       email: "",
       address: "",
+      category: "",
       availableCapacity: 10,
       roomTypes: [{ name: "Quarto individual", quantity: 1, bedsPerRoom: 1, priceType: "DIARIA", price: 0 }],
       services: [],
@@ -57,6 +58,7 @@ export function PartnerForm() {
   const { fields, append, remove } = useFieldArray({ control, name: "roomTypes" });
 
   const services = watch("services") ?? [];
+  const category = watch("category");
 
   const toggleService = (value: string) => {
     const next = services.includes(value)
@@ -105,6 +107,25 @@ export function PartnerForm() {
           <h2 className="text-lg font-semibold text-ink">Dados básicos</h2>
           <Field label="Nome do estabelecimento" required error={errors.tradeName?.message}>
             <Input placeholder="Ex.: Hotel Executivo Jataí" {...register("tradeName")} />
+          </Field>
+          <Field label="Categoria" required error={errors.category?.message}>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {PARTNER_CATEGORIES.map((c) => (
+                <button
+                  type="button"
+                  key={c}
+                  onClick={() => setValue("category", c, { shouldValidate: true })}
+                  className={cn(
+                    "rounded-xl border px-4 py-2.5 text-left text-sm transition-colors",
+                    category === c
+                      ? "border-accent bg-accent-soft text-accent-strong"
+                      : "border-border bg-white text-ink hover:border-brand-600",
+                  )}
+                >
+                  {PARTNER_CATEGORY_LABEL[c]}
+                </button>
+              ))}
+            </div>
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Razão social" required error={errors.legalName?.message}>

@@ -15,7 +15,7 @@ Toda e qualquer alteração no sistema — **rotas, modelos, campos, enums de st
    - `client/src/lib/constants.ts` (rótulos e listas de opções)
    - `server/src/routes/*` (schemas de entrada e respostas)
    - `server/src/lib/serialize.ts` (serialização das entidades)
-   - `server/prisma/schema.prisma` (modelo de dados)
+   - `server/prisma/schema.prisma` (modelo de dados) **e uma nova migration em `server/prisma/migrations/`**
 3. **Swagger/OpenAPI** — [`docs/openapi.yaml`](./openapi.yaml) (o contrato de API).
 
 **Não considere uma tarefa concluída enquanto qualquer um dos três estiver desatualizado.**
@@ -40,7 +40,7 @@ Toda e qualquer alteração no sistema — **rotas, modelos, campos, enums de st
 
 - **Idioma:** o código e os textos visíveis usam português (pt-BR).
 - **Stack:** React + Vite (client) e Express + Prisma (server), com Bun como runtime/gerenciador.
-- **Status como `String`:** os enums de status são armazenados como texto (não enums do banco) para compatibilidade com SQLite e futura migração para PostgreSQL. O valor permitido fica documentado no `schema.prisma` (comentário) e em `constants.ts`.
+- **Status como `String`:** os enums de status são armazenados como texto (não enums do banco) para portabilidade entre bancos. O valor permitido fica documentado no `schema.prisma` (comentário) e em `constants.ts`.
 - **Validação dupla:** toda entrada é validada no front (Zod) e no back (Zod no endpoint). Não confie só no front.
 - **Formato de valores monetários:** números em reais são armazenados como `Float` e formatados com `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`.
 
@@ -50,6 +50,7 @@ Toda e qualquer alteração no sistema — **rotas, modelos, campos, enums de st
 
 ```bash
 bun run build     # compila front e gera o Prisma Client
-bun run db:reset  # recria o banco com o seed atualizado (se o schema mudou)
+# se o schema mudou: gere e revise uma migration (ver docs/uso-do-sistema.md, "Alterando o schema")
+bun run db:migrate   # aplica migrations pendentes
 bun run dev       # testa o fluxo ponta a ponta
 ```

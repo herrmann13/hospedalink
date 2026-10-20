@@ -305,7 +305,7 @@ paths:
           description: Não encontrado
     patch:
       tags: [Admin]
-      summary: "Atualiza parceiro (ex.: aprovar)"
+      summary: "Atualiza parceiro (ex.: aprovar, alterar categoria)"
       parameters:
         - $ref: "#/components/parameters/IdPath"
       requestBody:
@@ -317,6 +317,8 @@ paths:
               properties:
                 status:
                   $ref: "#/components/schemas/PartnerStatus"
+                category:
+                  $ref: "#/components/schemas/PartnerCategory"
                 availableCapacity:
                   type: integer
                 notes:
@@ -591,6 +593,7 @@ components:
         - phone
         - email
         - address
+        - category
         - availableCapacity
         - roomTypes
         - consent
@@ -612,6 +615,8 @@ components:
           format: email
         address:
           type: string
+        category:
+          $ref: "#/components/schemas/PartnerCategory"
         availableCapacity:
           type: integer
           minimum: 1
@@ -724,6 +729,8 @@ components:
           type: string
         address:
           type: string
+        category:
+          $ref: "#/components/schemas/PartnerCategory"
         availableCapacity:
           type: integer
         status:
@@ -911,6 +918,10 @@ components:
       type: string
       enum: [PENDING, ACTIVE, INACTIVE]
 
+    PartnerCategory:
+      type: string
+      enum: [HOTEL, POUSADA, ALOJAMENTO, APART_HOTEL, HOSTEL, CASA]
+
     NegotiationStatus:
       type: string
       enum:
@@ -941,6 +952,17 @@ components:
         - AIR_CONDITIONING
         - KITCHEN
         - RECEPTION_24H
+        - PRIVATE_BATHROOM
+        - TV
+        - MINIBAR
+        - DAILY_CLEANING
+        - BED_LINEN
+        - EARLY_BREAKFAST
+        - PACKED_MEAL
+        - LARGE_VEHICLE_PARKING
+        - MEETING_ROOM
+        - ACCESSIBILITY
+        - INVOICE
         - OTHER
 
   securitySchemes:

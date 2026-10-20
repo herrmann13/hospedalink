@@ -10,6 +10,8 @@ export type RequestStatus =
 
 export type PartnerStatus = "PENDING" | "ACTIVE" | "INACTIVE";
 
+export type PartnerCategory = "HOTEL" | "POUSADA" | "ALOJAMENTO" | "APART_HOTEL" | "HOSTEL" | "CASA";
+
 export type NegotiationStatus =
   | "AGUARDANDO_RETORNO"
   | "DISPONIVEL"
@@ -32,6 +34,17 @@ export type RequirementType =
   | "AIR_CONDITIONING"
   | "KITCHEN"
   | "RECEPTION_24H"
+  | "PRIVATE_BATHROOM"
+  | "TV"
+  | "MINIBAR"
+  | "DAILY_CLEANING"
+  | "BED_LINEN"
+  | "EARLY_BREAKFAST"
+  | "PACKED_MEAL"
+  | "LARGE_VEHICLE_PARKING"
+  | "MEETING_ROOM"
+  | "ACCESSIBILITY"
+  | "INVOICE"
   | "OTHER";
 
 export interface Company {
@@ -82,6 +95,7 @@ export interface Partner {
   whatsapp?: string | null;
   email: string;
   address: string;
+  category: PartnerCategory;
   latitude?: number | null;
   longitude?: number | null;
   availableCapacity: number;
