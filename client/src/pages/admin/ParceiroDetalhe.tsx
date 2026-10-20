@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { Image, PencilSimple, SpinnerGap, X } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatBRL } from "@/lib/masks";
@@ -12,8 +14,9 @@ import {
   SERVICE_LABEL,
   PRICE_TYPES,
 } from "@/lib/constants";
-import { Button } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { Select } from "@/components/ui/fields";
+import { cn } from "@/lib/cn";
 
 export function ParceiroDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +46,11 @@ export function ParceiroDetalhe() {
 
   const partner = data?.partner;
 
+  const onPartnerSaved = (saved: Partner) => {
+    qc.setQueryData(["partner", id], { partner: saved });
+    qc.invalidateQueries({ queryKey: ["partners"] });
+  };
+
   if (isLoading || !partner) {
     return (
       <div className="flex min-h-[60dvh] items-center justify-center">
@@ -60,18 +68,24 @@ export function ParceiroDetalhe() {
         title={partner.tradeName}
         description={partner.legalName}
         action={
-          partner.status === "PENDING" ? (
-            <div className="flex gap-2">
-              <Button variant="accent" onClick={() => setStatus.mutate("ACTIVE")}>
-                Aprovar parceiro
-              </Button>
-              <Button variant="secondary" onClick={() => setStatus.mutate("INACTIVE")}>
-                Recusar
-              </Button>
-            </div>
-          ) : (
-            <Badge tone={partnerTone(partner.status)}>{PARTNER_STATUS_LABEL[partner.status]}</Badge>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            {partner.status === "PENDING" ? (
+              <>
+                <Button variant="accent" onClick={() => setStatus.mutate("ACTIVE")}>
+                  Aprovar parceiro
+                </Button>
+                <Button variant="secondary" onClick={() => setStatus.mutate("INACTIVE")}>
+                  Recusar
+                </Button>
+              </>
+            ) : (
+              <Badge tone={partnerTone(partner.status)}>{PARTNER_STATUS_LABEL[partner.status]}</Badge>
+            )}
+            <LinkButton to={`/admin/parceiros/${partner.id}/editar`} variant="outline">
+              <PencilSimple size={16} />
+              Editar
+            </LinkButton>
+          </div>
         }
       />
 
@@ -150,20 +164,9 @@ export function ParceiroDetalhe() {
             <p className="text-sm leading-relaxed text-muted">{partner.notes || "Sem observações."}</p>
           </Section>
 
-          {partner.images && partner.images.length > 0 && (
-            <Section title="Fotos">
-              <div className="grid grid-cols-2 gap-2">
-                {partner.images.map((img, i) => (
-                  <img
-                    key={img.id}
-                    src={img.imageUrl}
-                    alt={`Foto ${i + 1}`}
-                    className="aspect-[4/3] w-full rounded-lg object-cover"
-                  />
-                ))}
-              </div>
-            </Section>
-          )}
+          <Section title="Fotos">
+            <PartnerPhotos partner={partner} onSaved={onPartnerSaved} />
+          </Section>
         </div>
       </div>
     </div>
@@ -184,6 +187,101 @@ function Detail({ label, value, mono = false }: { label: string; value?: string;
     <div>
       <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
       <dd className={`mt-1 text-sm text-ink ${mono ? "font-mono" : ""}`}>{value || "-"}</dd>
+    </div>
+  );
+}
+
+const MAX_PHOTOS = 10;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+function PartnerPhotos({ partner, onSaved }: { partner: Partner; onSaved: (p: Partner) => void }) {
+  const [uploading, setUploading] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const images = partner.images ?? [];
+
+  const upload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setError(null);
+    const queue = Array.from(files).slice(0, MAX_PHOTOS - images.length);
+    const invalid = queue.find((f) => !ACCEPTED_TYPES.includes(f.type) || f.size > MAX_PHOTO_BYTES);
+    if (invalid) {
+      setError(`"${invalid.name}" precisa ser JPEG, PNG ou WEBP com até 5 MB.`);
+      return;
+    }
+    setUploading(queue.length);
+    try {
+      for (const file of queue) {
+        const { partner: saved } = await api.upload<{ partner: Partner }>(
+          `/api/admin/partners/${partner.id}/images`,
+          file,
+        );
+        onSaved(saved);
+        setUploading((n) => n - 1);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao enviar a foto.");
+    } finally {
+      setUploading(0);
+    }
+  };
+
+  const remove = async (imageId: string) => {
+    setError(null);
+    try {
+      const { partner: saved } = await api.delete<{ partner: Partner }>(
+        `/api/admin/partners/${partner.id}/images/${imageId}`,
+      );
+      onSaved(saved);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao remover a foto.");
+    }
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2">
+        {images.map((img, i) => (
+          <div key={img.id} className="relative">
+            <img
+              src={img.imageUrl}
+              alt={`Foto ${i + 1}`}
+              className="aspect-[4/3] w-full rounded-lg object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => remove(img.id)}
+              className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1 text-ink shadow-sm hover:text-red-600"
+              aria-label={`Remover foto ${i + 1}`}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ))}
+        {images.length < MAX_PHOTOS && (
+          <label
+            className={cn(
+              "flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface text-muted transition-colors hover:border-brand-600 hover:text-brand",
+              uploading > 0 && "pointer-events-none opacity-60",
+            )}
+          >
+            {uploading > 0 ? <SpinnerGap size={22} className="animate-spin" /> : <Image size={22} />}
+            <span className="text-xs">{uploading > 0 ? `Enviando (${uploading})...` : "Adicionar"}</span>
+            <input
+              type="file"
+              accept={ACCEPTED_TYPES.join(",")}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                upload(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-muted">Até {MAX_PHOTOS} fotos. JPEG, PNG ou WEBP, máx. 5 MB cada.</p>
+      {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
     </div>
   );
 }

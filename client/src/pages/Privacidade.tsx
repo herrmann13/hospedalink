@@ -7,7 +7,7 @@ export function Privacidade() {
       <div className="mt-8 space-y-6 text-base leading-relaxed text-muted">
         <p>
           A Hospeda Link trata os dados informados com a finalidade exclusiva de
-          atender solicitações de hospedagem corporativa e cadastros de
+          atender solicitações de hospedagem corporativa e gerenciar a rede de
           estabelecimentos parceiros.
         </p>
         <h2 className="text-lg font-semibold text-ink">Dados coletados</h2>

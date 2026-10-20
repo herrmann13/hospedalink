@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { Reveal } from "@/components/ui/Reveal";
 
-const partnerBenefits = [
-  "Novas oportunidades comerciais",
-  "Ocupação de vagas disponíveis",
-  "Acesso a clientes corporativos",
+const partnerHighlights = [
+  "Hotéis, pousadas e alojamentos",
+  "Filtro por quantidade de pessoas",
+  "Ar-condicionado, café da manhã e mais",
+  "Vagas para vans e caminhões",
   "Estadias de vários dias",
-  "Negociação centralizada",
-  "Relacionamento recorrente",
+  "Negociação feita pela Hospeda Link",
 ];
 
 export function ParaParceiros() {
@@ -19,7 +19,7 @@ export function ParaParceiros() {
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10">
               <img
                 src="https://picsum.photos/seed/hospeda-pousada/1000/750"
-                alt="Pousada parceira pronta para receber equipes"
+                alt="Hospedagem parceira pronta para receber equipes"
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
@@ -29,10 +29,10 @@ export function ParaParceiros() {
 
           <Reveal className="order-1 lg:order-2">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Tem um hotel, pousada ou alojamento em Jataí?
+              Conheça as hospedagens parceiras em Jataí
             </h2>
             <ul className="mt-8 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
-              {partnerBenefits.map((b) => (
+              {partnerHighlights.map((b) => (
                 <li key={b} className="flex items-center gap-3 text-sm text-white/80">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                   {b}
@@ -42,10 +42,10 @@ export function ParaParceiros() {
 
             <div className="mt-9">
               <Link
-                to="/seja-parceiro"
+                to="/parceiros"
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-7 text-base font-semibold text-white transition-colors hover:bg-accent-strong"
               >
-                Quero ser parceiro
+                Ver parceiros
               </Link>
             </div>
           </Reveal>

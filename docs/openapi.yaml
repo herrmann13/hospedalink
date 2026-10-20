@@ -97,29 +97,55 @@ paths:
           description: Dados inválidos
 
   /partners:
-    post:
+    get:
       tags: [Público]
-      summary: Solicita cadastro de parceiro (status PENDING)
+      summary: Catálogo de parceiros ativos (sem contatos, CNPJ ou observações internas)
       security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreatePartnerInput"
       responses:
-        "201":
-          description: Cadastro recebido
+        "200":
+          description: Parceiros ativos
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  ok:
-                    type: boolean
-                    example: true
-        "400":
-          description: Dados inválidos
+                  partners:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicPartner"
+
+  /partners/{id}:
+    get:
+      tags: [Público]
+      summary: Detalhe público de um parceiro ativo
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Parceiro
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/PublicPartner"
+        "404":
+          description: Não encontrado ou não ativo
+
+  /partner-images/{id}:
+    get:
+      tags: [Público]
+      summary: Redireciona para a URL assinada (temporária) da foto no bucket
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "302":
+          description: Redirecionamento para a imagem
+        "404":
+          description: Imagem não encontrada
 
   /admin/dashboard:
     get:
@@ -284,6 +310,27 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Partner"
+    post:
+      tags: [Admin]
+      summary: Cadastra parceiro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerInput"
+      responses:
+        "201":
+          description: Parceiro criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+        "400":
+          description: Dados inválidos
 
   /admin/partners/{id}:
     get:
@@ -301,6 +348,31 @@ paths:
                 properties:
                   partner:
                     $ref: "#/components/schemas/Partner"
+        "404":
+          description: Não encontrado
+    put:
+      tags: [Admin]
+      summary: Atualiza todos os dados do parceiro (substitui quartos e comodidades)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerInput"
+      responses:
+        "200":
+          description: Parceiro atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+        "400":
+          description: Dados inválidos
         "404":
           description: Não encontrado
     patch:
@@ -333,6 +405,62 @@ paths:
                 properties:
                   partner:
                     $ref: "#/components/schemas/Partner"
+
+  /admin/partners/{id}/images:
+    post:
+      tags: [Admin]
+      summary: Envia uma foto do parceiro (máx. 10 por parceiro)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Foto salva; retorna o parceiro atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+        "400":
+          description: Arquivo inválido ou limite de fotos atingido
+        "413":
+          description: Arquivo maior que 5 MB
+        "503":
+          description: Bucket não configurado (variáveis S3_*)
+
+  /admin/partners/{id}/images/{imageId}:
+    delete:
+      tags: [Admin]
+      summary: Remove uma foto do parceiro (banco e bucket)
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Foto removida; retorna o parceiro atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partner:
+                    $ref: "#/components/schemas/Partner"
+        "404":
+          description: Imagem não encontrada
 
   /admin/negotiations:
     get:
@@ -583,7 +711,7 @@ components:
           type: boolean
           enum: [true]
 
-    CreatePartnerInput:
+    PartnerInput:
       type: object
       required:
         - tradeName
@@ -596,7 +724,6 @@ components:
         - category
         - availableCapacity
         - roomTypes
-        - consent
       properties:
         tradeName:
           type: string
@@ -617,6 +744,8 @@ components:
           type: string
         category:
           $ref: "#/components/schemas/PartnerCategory"
+        status:
+          $ref: "#/components/schemas/PartnerStatus"
         availableCapacity:
           type: integer
           minimum: 1
@@ -628,13 +757,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RequirementType"
-        conditions:
-          type: string
         notes:
           type: string
-        consent:
-          type: boolean
-          enum: [true]
+          description: Observações internas (não aparecem no catálogo público)
 
     RoomTypeInput:
       type: object
@@ -754,6 +879,43 @@ components:
           type: string
         tradeName:
           type: string
+
+    PublicPartner:
+      type: object
+      properties:
+        id:
+          type: string
+        tradeName:
+          type: string
+        category:
+          $ref: "#/components/schemas/PartnerCategory"
+        address:
+          type: string
+        availableCapacity:
+          type: integer
+        roomTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoomType"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/PartnerImage"
+
+    PartnerImage:
+      type: object
+      properties:
+        id:
+          type: string
+        imageUrl:
+          type: string
+          description: URL externa ou /api/partner-images/{id}
+        sortOrder:
+          type: integer
 
     PartnerSummary:
       type: object

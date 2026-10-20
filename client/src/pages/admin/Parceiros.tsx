@@ -1,28 +1,23 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, MagnifyingGlass, Users, X } from "@phosphor-icons/react";
+import { Plus } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
-import type { Partner, PartnerCategory, PartnerStatus } from "@/lib/types";
+import type { Partner, PartnerStatus } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Badge, partnerTone } from "@/components/ui/Badge";
-import {
-  PARTNER_CATEGORIES,
-  PARTNER_CATEGORY_LABEL,
-  PARTNER_STATUS_LABEL,
-  SERVICES,
-  SERVICE_LABEL,
-} from "@/lib/constants";
-import { Button } from "@/components/ui/Button";
-import { Input, Select } from "@/components/ui/fields";
-import { onlyDigits } from "@/lib/masks";
+import { PARTNER_CATEGORY_LABEL, PARTNER_STATUS_LABEL, SERVICE_LABEL } from "@/lib/constants";
+import { Button, LinkButton } from "@/components/ui/Button";
+import { Select } from "@/components/ui/fields";
+import { PartnerFilters, usePartnerFilters } from "@/components/partners/PartnerFilters";
+import { maskCnpj } from "@/lib/masks";
 import { cn } from "@/lib/cn";
 
 const STATUSES = Object.keys(PARTNER_STATUS_LABEL) as PartnerStatus[];
 const MAX_SERVICES_IN_ROW = 3;
 
-const normalize = (v: string) =>
-  v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const adminSearchText = (p: Partner) =>
+  [p.tradeName, p.legalName, p.address, p.contactName, p.email, p.cnpj, maskCnpj(p.cnpj)].join(" ");
 
 export function Parceiros() {
   const qc = useQueryClient();
@@ -39,108 +34,32 @@ export function Parceiros() {
     },
   });
 
-  const [search, setSearch] = useState("");
-  const [guests, setGuests] = useState("");
-  const [category, setCategory] = useState<PartnerCategory | "">("");
+  const filters = usePartnerFilters(data?.partners ?? [], adminSearchText);
   const [status, setStatus] = useState<PartnerStatus | "">("");
-  const [services, setServices] = useState<string[]>([]);
-
-  const allPartners = data?.partners ?? [];
-
-  const partners = useMemo(() => {
-    const term = normalize(search.trim());
-    const digits = onlyDigits(search);
-    const minGuests = Number(guests) || 0;
-
-    return allPartners.filter((p) => {
-      if (term) {
-        const haystack = normalize(
-          [p.tradeName, p.legalName, p.address, p.contactName, p.email].join(" "),
-        );
-        const matchesCnpj = digits.length >= 3 && p.cnpj.includes(digits);
-        if (!haystack.includes(term) && !matchesCnpj) return false;
-      }
-      if (minGuests && p.availableCapacity < minGuests) return false;
-      if (category && p.category !== category) return false;
-      if (status && p.status !== status) return false;
-      const partnerServices: string[] = p.services ?? [];
-      if (!services.every((s) => partnerServices.includes(s))) return false;
-      return true;
-    });
-  }, [allPartners, search, guests, category, status, services]);
-
-  const categoryCounts = useMemo(() => {
-    const counts: Partial<Record<PartnerCategory, number>> = {};
-    allPartners.forEach((p) => {
-      counts[p.category] = (counts[p.category] ?? 0) + 1;
-    });
-    return counts;
-  }, [allPartners]);
-
-  const toggleService = (value: string) =>
-    setServices((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
-    );
-
-  const hasFilters = Boolean(search || guests || category || status || services.length);
-
-  const clearFilters = () => {
-    setSearch("");
-    setGuests("");
-    setCategory("");
-    setStatus("");
-    setServices([]);
-  };
+  const partners = filters.filtered.filter((p) => !status || p.status === status);
+  const selectedServices = filters.services;
 
   return (
     <div>
       <PageHeader
         title="Parceiros"
         description="Hotéis, pousadas e alojamentos cadastrados."
+        action={
+          <LinkButton to="/admin/parceiros/novo">
+            <Plus size={16} />
+            Novo parceiro
+          </LinkButton>
+        }
       />
 
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-        <CategoryChip active={category === ""} onClick={() => setCategory("")}>
-          Todas <span className="text-muted">({allPartners.length})</span>
-        </CategoryChip>
-        {PARTNER_CATEGORIES.map((c) => (
-          <CategoryChip key={c} active={category === c} onClick={() => setCategory(c)}>
-            {PARTNER_CATEGORY_LABEL[c]}{" "}
-            <span className="text-muted">({categoryCounts[c] ?? 0})</span>
-          </CategoryChip>
-        ))}
-      </div>
-
-      <div className="mb-6 space-y-4 rounded-2xl border border-border bg-white p-4 sm:p-5">
-        <div className="grid gap-3 sm:grid-cols-[1fr_180px_180px]">
-          <div className="relative">
-            <MagnifyingGlass
-              size={18}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-            />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, endereço, responsável ou CNPJ"
-              className="pl-10"
-            />
-          </div>
-          <div className="relative">
-            <Users
-              size={18}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-            />
-            <Input
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              placeholder="Nº de pessoas"
-              aria-label="Quantidade de pessoas a hospedar"
-              className="pl-10"
-            />
-          </div>
+      <PartnerFilters
+        state={filters}
+        searchPlaceholder="Buscar por nome, endereço, responsável ou CNPJ"
+        shown={partners.length}
+        loading={isLoading}
+        extraActive={Boolean(status)}
+        onClearExtra={() => setStatus("")}
+        extra={
           <Select value={status} onChange={(e) => setStatus(e.target.value as PartnerStatus | "")}>
             <option value="">Todos os status</option>
             {STATUSES.map((s) => (
@@ -149,50 +68,8 @@ export function Parceiros() {
               </option>
             ))}
           </Select>
-        </div>
-
-        <div>
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">Comodidades</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {SERVICES.map((s) => {
-              const active = services.includes(s.value);
-              return (
-                <button
-                  type="button"
-                  key={s.value}
-                  onClick={() => toggleService(s.value)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "border-accent bg-accent-soft text-accent-strong"
-                      : "border-border bg-white text-muted hover:border-brand-600 hover:text-ink",
-                  )}
-                >
-                  {active && <CheckCircle size={14} weight="fill" />}
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-          <span className="text-muted">
-            {isLoading
-              ? "Carregando..."
-              : `${partners.length} de ${allPartners.length} parceiro${allPartners.length === 1 ? "" : "s"}`}
-          </span>
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
-            >
-              <X size={14} /> Limpar filtros
-            </button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
         <div className="overflow-x-auto">
@@ -217,7 +94,7 @@ export function Parceiros() {
               ) : partners.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-muted">
-                    {allPartners.length === 0
+                    {filters.total === 0
                       ? "Nenhum parceiro cadastrado."
                       : "Nenhum parceiro encontrado com esses filtros."}
                   </td>
@@ -226,8 +103,8 @@ export function Parceiros() {
                 partners.map((p) => {
                   const partnerServices = p.services ?? [];
                   const highlighted = [
-                    ...partnerServices.filter((s) => services.includes(s)),
-                    ...partnerServices.filter((s) => !services.includes(s)),
+                    ...partnerServices.filter((s) => selectedServices.includes(s)),
+                    ...partnerServices.filter((s) => !selectedServices.includes(s)),
                   ];
                   const extra = highlighted.length - MAX_SERVICES_IN_ROW;
                   return (
@@ -252,7 +129,7 @@ export function Parceiros() {
                                 key={s}
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-xs",
-                                  services.includes(s)
+                                  selectedServices.includes(s)
                                     ? "bg-accent-soft text-accent-strong"
                                     : "bg-surface-2 text-muted",
                                 )}
@@ -293,30 +170,5 @@ export function Parceiros() {
         </div>
       </div>
     </div>
-  );
-}
-
-function CategoryChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-        active
-          ? "border-brand bg-brand text-white [&_span]:text-white/70"
-          : "border-border bg-white text-ink hover:border-brand-600",
-      )}
-    >
-      {children}
-    </button>
   );
 }

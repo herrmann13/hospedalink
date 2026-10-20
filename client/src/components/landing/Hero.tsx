@@ -41,10 +41,10 @@ export function Hero() {
               Solicitar hospedagem
             </Link>
             <Link
-              to="/seja-parceiro"
+              to="/parceiros"
               className="inline-flex h-12 items-center justify-center rounded-xl border border-white/25 px-7 text-base font-medium text-white transition-colors hover:bg-white/10"
             >
-              Quero ser parceiro
+              Ver parceiros
             </Link>
           </motion.div>
 

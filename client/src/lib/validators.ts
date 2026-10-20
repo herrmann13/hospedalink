@@ -67,6 +67,7 @@ export const partnerSchema = z.object({
   email,
   address: z.string().min(3, "Informe o endereço"),
   category: z.string().min(1, "Selecione a categoria"),
+  status: z.enum(["PENDING", "ACTIVE", "INACTIVE"]),
   availableCapacity: z.coerce.number().int().min(1, "Informe a capacidade"),
   roomTypes: z
     .array(
@@ -80,11 +81,7 @@ export const partnerSchema = z.object({
     )
     .min(1, "Adicione ao menos um tipo de quarto"),
   services: z.array(z.string()),
-  conditions: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
-  consent: z.boolean().refine((v) => v === true, {
-    message: "É necessário autorizar o contato",
-  }),
 });
 
 export type PartnerFormValues = z.infer<typeof partnerSchema>;

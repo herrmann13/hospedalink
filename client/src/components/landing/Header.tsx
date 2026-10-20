@@ -22,7 +22,7 @@ export function Logo({ dark = false }: { dark?: boolean }) {
 const NAV = [
   { label: "Como funciona", href: "/#como-funciona" },
   { label: "Para empresas", href: "/#para-empresas" },
-  { label: "Parceiros", href: "/#para-parceiros" },
+  { label: "Parceiros", href: "/parceiros" },
   { label: "Contato", href: "/#contato" },
 ];
 

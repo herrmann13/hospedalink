@@ -107,6 +107,18 @@ export interface Partner {
   images?: PartnerImage[];
 }
 
+/** Parceiro como aparece no catálogo público (sem contatos e dados internos). */
+export interface PublicPartner {
+  id: string;
+  tradeName: string;
+  category: PartnerCategory;
+  address: string;
+  availableCapacity: number;
+  roomTypes: Omit<RoomType, "partnerId">[];
+  services: RequirementType[];
+  images: PartnerImage[];
+}
+
 export interface PartnerSummary {
   id: string;
   legalName: string;

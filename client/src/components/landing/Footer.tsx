@@ -7,14 +7,14 @@ const columns = [
     links: [
       { label: "Como funciona", href: "/#como-funciona" },
       { label: "Para empresas", href: "/#para-empresas" },
-      { label: "Parceiros", href: "/#para-parceiros" },
+      { label: "Parceiros", href: "/parceiros" },
     ],
   },
   {
     title: "Para você",
     links: [
       { label: "Solicitar hospedagem", href: "/solicitar-hospedagem" },
-      { label: "Cadastrar estabelecimento", href: "/seja-parceiro" },
+      { label: "Ver parceiros", href: "/parceiros" },
     ],
   },
   {

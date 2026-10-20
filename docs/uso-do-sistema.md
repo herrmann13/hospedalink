@@ -73,6 +73,9 @@ No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e 
 | `PORT` | Não | Definida pelo Railway | `3001` |
 | `ADMIN_EMAIL` | Não | `admin@hospedalink.com.br` | Mesmo valor |
 | `ADMIN_PASSWORD` | No primeiro seed | Senha forte (mín. 12 caracteres) | Não necessária depois do primeiro seed |
+| `S3_BUCKET` | Para fotos | Nome do bucket (Railway Bucket) | Mesmo bucket |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Para fotos | Credenciais do bucket (`railway bucket credentials`) | Mesmas credenciais |
+| `S3_ENDPOINT` / `S3_REGION` | Para fotos | Endpoint S3 e região do bucket | Mesmos valores |
 | `NODE_ENV` | — | `production` (definida no `Dockerfile`) | — |
 
 ### Alterando o schema (migrations)
@@ -98,11 +101,14 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 |---|---|
 | `/` | Landing page (hero, como funciona, benefícios, para empresas, parceiros, diferenciação) |
 | `/solicitar-hospedagem` | Formulário de solicitação em 4 etapas |
-| `/seja-parceiro` | Cadastro de estabelecimento parceiro |
+| `/parceiros` | Catálogo público de parceiros ativos: abas por categoria, busca por nome/endereço, filtros por nº de pessoas e comodidades |
+| `/parceiros/:id` | Detalhe público do parceiro (fotos, acomodações, preços, comodidades). Sem contatos, CNPJ ou observações internas |
 | `/privacidade` | Política de privacidade |
 | `/termos` | Termos de uso |
 
 ### Administrativas (requerem login)
+
+> O painel não tem link em nenhuma página pública: acesse digitando `/admin` na URL (redireciona para `/admin/login`).
 
 | Rota | Descrição |
 |---|---|
@@ -111,7 +117,9 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 | `/admin/solicitacoes` | Lista de solicitações |
 | `/admin/solicitacoes/:id` | Detalhe da solicitação (status, negociações, propostas, contrato) |
 | `/admin/parceiros` | Lista de parceiros com abas por categoria, busca (nome, endereço, responsável, CNPJ) e filtros por nº de pessoas, status e comodidades |
-| `/admin/parceiros/:id` | Detalhe do parceiro (aprovação, categoria, quartos, serviços) |
+| `/admin/parceiros/novo` | Cadastro de parceiro (somente pela equipe interna) |
+| `/admin/parceiros/:id` | Detalhe do parceiro (aprovação, categoria, quartos, serviços, upload/remoção de fotos) |
+| `/admin/parceiros/:id/editar` | Edição completa do parceiro |
 | `/admin/negociacoes` | Negociações em andamento |
 | `/admin/contratos` | Contratos fechados |
 | `/admin/configuracoes` | Taxa de captação padrão |
@@ -128,12 +136,15 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 4. O formulário aplica máscara de CNPJ e telefone, valida as datas (saída > entrada) e calcula as diárias automaticamente.
 5. Ao enviar, recebe um protocolo (ex.: `SOL-000005`).
 
-### 5.2 Fluxo do estabelecimento parceiro
+### 5.2 Fluxo de parceiros
 
-1. Acessa `/seja-parceiro`.
-2. Informa dados básicos (incluindo a categoria do estabelecimento), estrutura (tipos de quarto), condições comerciais, serviços e fotos.
-3. O cadastro é criado com status **PENDENTE**.
-4. A equipe interna aprova (ou recusa) em `/admin/parceiros`.
+Não existe cadastro público de parceiros. A equipe interna:
+
+1. Acessa `/admin/parceiros` → **Novo parceiro** e informa dados básicos, categoria, status, vagas, tipos de quarto, comodidades e observações internas.
+2. Na página do parceiro, adiciona até 10 fotos (JPEG, PNG ou WEBP, até 5 MB cada), armazenadas no bucket S3 do Railway.
+3. Parceiros com status **ATIVO** aparecem no catálogo público `/parceiros`; **PENDENTE** e **INATIVO** ficam ocultos.
+
+O visitante navega pelo catálogo, filtra por categoria, quantidade de pessoas e comodidades, e segue para **Solicitar hospedagem**.
 
 ### 5.3 Fluxo administrativo (núcleo do negócio)
 
@@ -165,7 +176,9 @@ Todos os endpoints administrativos exigem o cookie de sessão (JWT) obtido em `P
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | `/api/requests` | Cria uma solicitação de hospedagem (com empresa) |
-| POST | `/api/partners` | Solicita cadastro de parceiro (status PENDING) |
+| GET | `/api/partners` | Catálogo: parceiros ativos (sem contatos/CNPJ/observações) |
+| GET | `/api/partners/:id` | Detalhe público de um parceiro ativo |
+| GET | `/api/partner-images/:id` | Redireciona (302) para URL assinada da foto no bucket |
 
 ### Administrativo
 
@@ -179,7 +192,11 @@ Todos os endpoints administrativos exigem o cookie de sessão (JWT) obtido em `P
 | POST | `/api/admin/requests/:id/proposals` | Cria proposta (com cálculo automático) |
 | GET | `/api/admin/partners` | Lista parceiros |
 | GET | `/api/admin/partners/:id` | Detalhe do parceiro |
+| POST | `/api/admin/partners` | Cadastra parceiro |
+| PUT | `/api/admin/partners/:id` | Atualiza todos os dados do parceiro (substitui quartos e comodidades) |
 | PATCH | `/api/admin/partners/:id` | Atualiza parceiro (ex.: aprovar, alterar categoria) |
+| POST | `/api/admin/partners/:id/images` | Envia uma foto (corpo binário, `Content-Type: image/jpeg|png|webp`, máx. 5 MB) |
+| DELETE | `/api/admin/partners/:id/images/:imageId` | Remove uma foto (do banco e do bucket) |
 | GET | `/api/admin/negotiations` | Lista negociações |
 | PATCH | `/api/admin/negotiations/:id` | Atualiza status da negociação |
 | GET | `/api/admin/contracts` | Lista contratos |
@@ -272,7 +289,7 @@ Novas solicitações recebem protocolos sequenciais. O backend possui retry para
 | Onde | O que |
 |---|---|
 | `/admin/configuracoes` | Taxa de captação padrão (armazenada em `Setting`) |
-| `server/.env` / Railway | `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN`, `PORT`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` |
+| `server/.env` / Railway | `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN`, `PORT`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `S3_*` |
 
 ---
 

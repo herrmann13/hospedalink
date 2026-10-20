@@ -61,6 +61,10 @@ export function createApp() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (err?.type === "entity.too.large") {
+      res.status(413).json({ error: "Arquivo muito grande (máximo de 5 MB)." });
+      return;
+    }
     console.error(err);
     res.status(500).json({ error: "Erro interno do servidor." });
   });

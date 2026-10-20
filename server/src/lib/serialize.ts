@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { isExternalUrl } from "./storage";
 
 type CompanyRecord = Prisma.CompanyGetPayload<{}>;
 type PartnerFull = Prisma.PartnerGetPayload<{
@@ -168,12 +169,40 @@ export function serializePartner(partner: PartnerFull) {
       notes: room.notes,
     })),
     services: partner.services.map((service) => service.serviceType),
-    images: partner.images.map((image) => ({
-      id: image.id,
-      imageUrl: image.imageUrl,
-      sortOrder: image.sortOrder,
-    })),
+    images: serializeImages(partner.images),
   };
+}
+
+/** Versão pública (catálogo): sem CNPJ, contatos, observações internas ou status. */
+export function serializePublicPartner(partner: PartnerFull) {
+  return {
+    id: partner.id,
+    tradeName: partner.tradeName,
+    category: partner.category,
+    address: partner.address,
+    availableCapacity: partner.availableCapacity,
+    roomTypes: partner.roomTypes.map((room) => ({
+      id: room.id,
+      name: room.name,
+      quantity: room.quantity,
+      bedsPerRoom: room.bedsPerRoom,
+      priceType: room.priceType,
+      price: room.price,
+    })),
+    services: partner.services.map((service) => service.serviceType),
+    images: serializeImages(partner.images),
+  };
+}
+
+function serializeImages(images: PartnerFull["images"]) {
+  return [...images]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((image) => ({
+      id: image.id,
+      // Imagens do bucket são servidas por /api/partner-images/:id (redireciona para URL assinada).
+      imageUrl: isExternalUrl(image.imageUrl) ? image.imageUrl : `/api/partner-images/${image.id}`,
+      sortOrder: image.sortOrder,
+    }));
 }
 
 export function serializeNegotiation(negotiation: NegotiationRecord) {

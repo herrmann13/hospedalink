@@ -2,7 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { generateProtocol, isUniqueConstraintError } from "../lib/protocol";
-import { partnerCategorySchema } from "../lib/statuses";
+import { serializePublicPartner } from "../lib/serialize";
+import { isExternalUrl, signedUrl, signedUrlMaxAge, storageEnabled } from "../lib/storage";
 
 const router = Router();
 
@@ -95,73 +96,39 @@ router.post("/requests", async (req, res) => {
   }
 });
 
-const partnerSchema = z.object({
-  tradeName: z.string().min(2),
-  legalName: z.string().min(2),
-  cnpj: z.string().transform(onlyDigits).refine((v) => v.length === 14, "CNPJ inválido"),
-  contactName: z.string().min(2),
-  phone: z.string().transform(onlyDigits),
-  whatsapp: z.string().transform(onlyDigits).optional().default(""),
-  email: z.string().email(),
-  address: z.string().min(3),
-  category: partnerCategorySchema,
-  availableCapacity: z.coerce.number().int().min(1),
-  roomTypes: z
-    .array(
-      z.object({
-        name: z.string().min(1),
-        quantity: z.coerce.number().int().min(1),
-        bedsPerRoom: z.coerce.number().int().min(1),
-        priceType: z.string(),
-        price: z.coerce.number().min(0),
-      }),
-    )
-    .min(1),
-  services: z.array(z.string()).default([]),
-  conditions: z.string().optional().default(""),
-  notes: z.string().optional().default(""),
-  consent: z.literal(true, {
-    errorMap: () => ({ message: "É necessário autorizar o contato." }),
-  }),
+const publicInclude = { roomTypes: true, services: true, images: true } as const;
+
+// Catálogo público: apenas parceiros ativos, sem dados de contato.
+router.get("/partners", async (_req, res) => {
+  const partners = await prisma.partner.findMany({
+    where: { status: "ACTIVE" },
+    include: publicInclude,
+    orderBy: { tradeName: "asc" },
+  });
+  res.json({ partners: partners.map(serializePublicPartner) });
 });
 
-router.post("/partners", async (req, res) => {
-  const parsed = partnerSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+router.get("/partners/:id", async (req, res) => {
+  const partner = await prisma.partner.findFirst({
+    where: { id: req.params.id, status: "ACTIVE" },
+    include: publicInclude,
+  });
+  if (!partner) {
+    res.status(404).json({ error: "Parceiro não encontrado." });
     return;
   }
-  const data = parsed.data;
+  res.json({ partner: serializePublicPartner(partner) });
+});
 
-  await prisma.partner.create({
-    data: {
-      legalName: data.legalName,
-      tradeName: data.tradeName,
-      cnpj: data.cnpj,
-      contactName: data.contactName,
-      phone: data.phone,
-      whatsapp: data.whatsapp || null,
-      email: data.email,
-      address: data.address,
-      category: data.category,
-      availableCapacity: data.availableCapacity,
-      notes: [data.conditions, data.notes].filter(Boolean).join("\n") || null,
-      roomTypes: {
-        create: data.roomTypes.map((r) => ({
-          name: r.name,
-          quantity: r.quantity,
-          bedsPerRoom: r.bedsPerRoom,
-          priceType: r.priceType,
-          price: r.price,
-        })),
-      },
-      services: {
-        create: data.services.map((serviceType) => ({ serviceType })),
-      },
-    },
-  });
-
-  res.status(201).json({ ok: true });
+router.get("/partner-images/:id", async (req, res) => {
+  const image = await prisma.partnerImage.findUnique({ where: { id: req.params.id } });
+  if (!image || (!isExternalUrl(image.imageUrl) && !storageEnabled)) {
+    res.status(404).json({ error: "Imagem não encontrada." });
+    return;
+  }
+  const target = isExternalUrl(image.imageUrl) ? image.imageUrl : signedUrl(image.imageUrl);
+  res.set("Cache-Control", `private, max-age=${signedUrlMaxAge}`);
+  res.redirect(302, target);
 });
 
 export default router;

@@ -9,8 +9,11 @@ const AdminLayout = lazy(() =>
 const SolicitarHospedagem = lazy(() =>
   import("./pages/SolicitarHospedagem").then((m) => ({ default: m.SolicitarHospedagem })),
 );
-const SejaParceiro = lazy(() =>
-  import("./pages/SejaParceiro").then((m) => ({ default: m.SejaParceiro })),
+const CatalogoParceiros = lazy(() =>
+  import("./pages/CatalogoParceiros").then((m) => ({ default: m.CatalogoParceiros })),
+);
+const ParceiroPublico = lazy(() =>
+  import("./pages/ParceiroPublico").then((m) => ({ default: m.ParceiroPublico })),
 );
 const Privacidade = lazy(() =>
   import("./pages/Privacidade").then((m) => ({ default: m.Privacidade })),
@@ -26,6 +29,9 @@ const SolicitacaoDetalhe = lazy(() =>
 );
 const Parceiros = lazy(() =>
   import("./pages/admin/Parceiros").then((m) => ({ default: m.Parceiros })),
+);
+const ParceiroForm = lazy(() =>
+  import("./pages/admin/ParceiroForm").then((m) => ({ default: m.ParceiroForm })),
 );
 const ParceiroDetalhe = lazy(() =>
   import("./pages/admin/ParceiroDetalhe").then((m) => ({ default: m.ParceiroDetalhe })),
@@ -56,7 +62,8 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/solicitar-hospedagem", element: wrap(<SolicitarHospedagem />) },
-      { path: "/seja-parceiro", element: wrap(<SejaParceiro />) },
+      { path: "/parceiros", element: wrap(<CatalogoParceiros />) },
+      { path: "/parceiros/:id", element: wrap(<ParceiroPublico />) },
       { path: "/privacidade", element: wrap(<Privacidade />) },
       { path: "/termos", element: wrap(<Termos />) },
     ],
@@ -70,7 +77,9 @@ export const router = createBrowserRouter([
       { path: "solicitacoes", element: wrap(<Solicitacoes />) },
       { path: "solicitacoes/:id", element: wrap(<SolicitacaoDetalhe />) },
       { path: "parceiros", element: wrap(<Parceiros />) },
+      { path: "parceiros/novo", element: wrap(<ParceiroForm />) },
       { path: "parceiros/:id", element: wrap(<ParceiroDetalhe />) },
+      { path: "parceiros/:id/editar", element: wrap(<ParceiroForm />) },
       { path: "negociacoes", element: wrap(<Negociacoes />) },
       { path: "contratos", element: wrap(<Contratos />) },
       { path: "configuracoes", element: wrap(<Configuracoes />) },

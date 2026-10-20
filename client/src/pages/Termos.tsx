@@ -22,8 +22,9 @@ export function Termos() {
         </p>
         <h2 className="text-lg font-semibold text-ink">3. Cadastro de parceiros</h2>
         <p>
-          O cadastro de estabelecimentos fica pendente de validação interna antes
-          de participar da rede de parceiros.
+          Os estabelecimentos parceiros são cadastrados e validados pela equipe
+          Hospeda Link. As informações exibidas no catálogo (acomodações, preços e
+          comodidades) são referenciais e confirmadas na negociação.
         </p>
         <h2 className="text-lg font-semibold text-ink">4. Remuneração</h2>
         <p>
