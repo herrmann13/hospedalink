@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { Home } from "./pages/Home";
+import { NotFound } from "./pages/NotFound";
 
 const AdminLayout = lazy(() =>
   import("./layouts/AdminLayout").then((m) => ({ default: m.AdminLayout })),
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: "/parceiros/:id", element: wrap(<ParceiroPublico />) },
       { path: "/privacidade", element: wrap(<Privacidade />) },
       { path: "/termos", element: wrap(<Termos />) },
+      { path: "*", element: <NotFound /> },
     ],
   },
   { path: "/admin/login", element: wrap(<Login />) },

@@ -105,6 +105,8 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 | `/parceiros/:id` | Detalhe público do parceiro (fotos, acomodações, preços, comodidades). Sem contatos, CNPJ ou observações internas |
 | `/privacidade` | Política de privacidade |
 | `/termos` | Termos de uso |
+| qualquer outra URL | Página "Esta página não existe" (HTTP **404**, não soft 404) |
+| `/robots.txt` e `/sitemap.xml` | Gerados pelo Express com a origem de `CLIENT_ORIGIN`; o sitemap lista apenas as rotas públicas (sem `/admin`) |
 
 ### Administrativas (requerem login)
 
@@ -124,6 +126,13 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 | `/admin/negociacoes` | Negociações em andamento |
 | `/admin/contratos` | Contratos fechados |
 | `/admin/configuracoes` | Taxa de captação padrão |
+
+### Cache e cabeçalhos HTTP
+
+- `/assets/*` (arquivos com hash no nome) são servidos com `Cache-Control: public, max-age=31536000, immutable`; o `index.html` vai com `no-cache`.
+- Todas as respostas incluem `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` e `Permissions-Policy`; em produção também `Strict-Transport-Security`.
+- Páginas `/admin*` recebem `X-Robots-Tag: noindex, nofollow`.
+- Erros de validação da API são sempre em pt-BR (mapa global em `server/src/lib/zodPtBr.ts`).
 
 ---
 

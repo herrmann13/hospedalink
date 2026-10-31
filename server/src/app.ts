@@ -9,10 +9,47 @@ import adminNegotiations from "./routes/admin/negotiations";
 import adminContracts from "./routes/admin/contracts";
 import adminSettings from "./routes/admin/settings";
 import adminDashboard from "./routes/admin/dashboard";
+import { applyPtBrErrorMap } from "./lib/zodPtBr";
+
+applyPtBrErrorMap();
+
+const securityHeaders = (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "script-src 'self'",
+      // React aplica estilos inline; o restante vem do bundle compilado.
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      // Fotos passam por /api/partner-images e redirecionam para URL assinada do bucket.
+      "img-src 'self' data: https:",
+      "connect-src 'self'",
+    ].join("; "),
+  );
+  next();
+};
 
 export function createApp() {
   const app = express();
   const configuredOrigin = process.env.CLIENT_ORIGIN;
+
+  // O app roda atrás do proxy do Railway: confia no X-Forwarded-* para
+  // protocolo, IP e cookies seguros.
+  app.set("trust proxy", 1);
+  app.disable("x-powered-by");
+  app.use(securityHeaders);
 
   if (process.env.NODE_ENV === "production" && !configuredOrigin) {
     throw new Error("CLIENT_ORIGIN é obrigatório em produção.");

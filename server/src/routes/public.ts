@@ -10,7 +10,7 @@ const router = Router();
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
 const validDate = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.")
   .refine((value) => {
     const [year, month, day] = value.split("-").map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
@@ -20,11 +20,11 @@ const validDate = z
       date.getUTCMonth() === month - 1 &&
       date.getUTCDate() === day
     );
-  }, "Data inválida");
+  }, "Data inválida.");
 
 const requestSchema = z.object({
   tradeName: z.string().min(2),
-  cnpj: z.string().transform(onlyDigits).refine((v) => v.length === 14, "CNPJ inválido"),
+  cnpj: z.string().transform(onlyDigits).refine((v) => v.length === 14, "CNPJ inválido."),
   contactName: z.string().min(2),
   contactRole: z.string().optional().default(""),
   contactEmail: z.string().email(),

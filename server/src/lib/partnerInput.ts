@@ -6,9 +6,9 @@ const onlyDigits = (v: string) => v.replace(/\D/g, "");
 export const partnerInputSchema = z.object({
   tradeName: z.string().min(2),
   legalName: z.string().min(2),
-  cnpj: z.string().transform(onlyDigits).refine((v) => v.length === 14, "CNPJ inválido"),
+  cnpj: z.string().transform(onlyDigits).refine((v) => v.length === 14, "CNPJ inválido."),
   contactName: z.string().min(2),
-  phone: z.string().transform(onlyDigits).refine((v) => v.length >= 10 && v.length <= 11, "Telefone inválido"),
+  phone: z.string().transform(onlyDigits).refine((v) => v.length >= 10 && v.length <= 11, "Telefone inválido."),
   whatsapp: z.string().transform(onlyDigits).optional().default(""),
   email: z.string().email(),
   address: z.string().min(3),
