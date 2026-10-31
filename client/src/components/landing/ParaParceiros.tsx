@@ -37,12 +37,18 @@ export function ParaParceiros() {
               ))}
             </ul>
 
-            <div className="mt-9">
+            <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 to="/parceiros"
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-accent px-7 text-base font-semibold text-white transition-colors hover:bg-accent-strong"
               >
                 Ver parceiros
+              </Link>
+              <Link
+                to="/seja-parceiro"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-white/25 px-7 text-base font-semibold text-white transition-colors hover:border-white/60"
+              >
+                Cadastrar meu estabelecimento
               </Link>
             </div>
           </Reveal>

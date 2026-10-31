@@ -77,6 +77,7 @@ No Railway, o projeto usa `railway.json`, serve o build do React pelo Express e 
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Para fotos | Credenciais do bucket (`railway bucket credentials`) | Mesmas credenciais |
 | `S3_ENDPOINT` / `S3_REGION` | Para fotos | Endpoint S3 e região do bucket | Mesmos valores |
 | `NODE_ENV` | — | `production` (definida no `Dockerfile`) | — |
+| `PARTNER_APPLICATION_RATE_MAX` | Não | `3` (candidaturas por hora por IP) | `3` |
 
 ### Alterando o schema (migrations)
 
@@ -101,6 +102,7 @@ O banco usa **Prisma Migrate**; não use `prisma db push` nem `prisma migrate de
 |---|---|
 | `/` | Landing page (hero, como funciona, benefícios, para empresas, parceiros, diferenciação) |
 | `/solicitar-hospedagem` | Formulário de solicitação em 4 etapas |
+| `/seja-parceiro` | Cadastro público de parceiro em 4 etapas (entra como PENDENTE, sujeito a aprovação) |
 | `/parceiros` | Catálogo público de parceiros ativos: abas por categoria, busca por nome/endereço, filtros por nº de pessoas e comodidades |
 | `/parceiros/:id` | Detalhe público do parceiro (fotos, acomodações, preços, comodidades). Sem contatos, CNPJ ou observações internas |
 | `/privacidade` | Política de privacidade |
@@ -152,11 +154,21 @@ Preços e capacidade são referenciais, sujeitos à confirmação para o períod
 
 ### 5.2 Fluxo de parceiros
 
-Não existe cadastro público de parceiros. A equipe interna:
+Existem dois caminhos para um parceiro entrar na rede:
 
-1. Acessa `/admin/parceiros` → **Novo parceiro** e informa dados básicos, categoria, status, vagas, tipos de quarto, comodidades e observações internas.
-2. Na página do parceiro, adiciona até 10 fotos (JPEG, PNG ou WEBP, até 5 MB cada), armazenadas no bucket S3 do Railway.
-3. Parceiros com status **ATIVO** aparecem no catálogo público `/parceiros`; **PENDENTE** e **INATIVO** ficam ocultos.
+**a) Candidatura pública (`/seja-parceiro`)**
+
+1. O estabelecimento preenche dados cadastrais, acomodações, comodidades, contato e até 5 fotos (JPEG, PNG ou WEBP, até 5 MB cada), com consentimento de contato.
+2. O cadastro entra como **PENDENTE** com `source = PUBLIC` e **não aparece no catálogo**. O servidor devolve um token temporário (2h) usado no envio das fotos; CNPJ já cadastrado é recusado com 409.
+3. O dashboard mostra um aviso com a quantidade de cadastros aguardando aprovação, levando para `/admin/parceiros?status=PENDING`.
+4. A equipe revisa, ajusta o que precisar e usa **Aprovar** (menu ⋮). Só então o parceiro passa a **ATIVO** e entra no catálogo.
+
+**b) Cadastro interno**
+
+1. A equipe acessa `/admin/parceiros` → **Novo parceiro** e informa dados básicos, categoria, status, vagas, tipos de quarto, comodidades e observações internas.
+2. Na página do parceiro, adiciona até 10 fotos, armazenadas no bucket S3 do Railway.
+
+Em ambos os casos, parceiros com status **ATIVO** aparecem no catálogo público `/parceiros`; **PENDENTE** e **INATIVO** ficam ocultos. Fotos de parceiros não ativos só são servidas para a equipe logada.
 
 O visitante navega pelo catálogo, filtra por categoria, quantidade de pessoas e comodidades, e segue para **Solicitar hospedagem**.
 
@@ -192,7 +204,9 @@ Todos os endpoints administrativos exigem o cookie de sessão (JWT) obtido em `P
 | POST | `/api/requests` | Cria uma solicitação de hospedagem (com empresa) |
 | GET | `/api/partners` | Catálogo: parceiros ativos (sem contatos/CNPJ/observações) |
 | GET | `/api/partners/:id` | Detalhe público de um parceiro ativo |
-| GET | `/api/partner-images/:id` | Redireciona (302) para URL assinada da foto no bucket |
+| GET | `/api/partner-images/:id` | Redireciona (302) para URL assinada da foto no bucket. Fotos de parceiros não ativos exigem sessão admin (senão 404) |
+| POST | `/api/partner-applications` | Candidatura pública de parceiro: cria como PENDENTE + `source = PUBLIC` e devolve `applicationId`, `token` (2h) e `expiresAt` |
+| POST | `/api/partner-applications/:id/images` | Envia uma foto da candidatura (corpo binário, header `X-Application-Token`); máx. 5 fotos de 5 MB |
 
 ### Administrativo
 
@@ -247,7 +261,7 @@ Definido em `server/prisma/schema.prisma`.
 
 - **Company:** `legalName`, `tradeName`, `cnpj`, `contactName`, `contactRole`, `contactEmail`, `contactPhone`.
 - **AccommodationRequest:** `protocol` (ex.: `SOL-000005`), `companyId`, `numberOfGuests`, `checkIn`, `checkOut`, `workLocation`, `accommodationPreference` (array de texto), `budgetRange`, `notes`, `internalNotes`, `status`.
-- **Partner:** `legalName`, `tradeName`, `cnpj`, `contactName`, `phone`, `whatsapp`, `email`, `address`, `category`, `availableCapacity`, `status`, `notes`.
+- **Partner:** `legalName`, `tradeName`, `cnpj`, `contactName`, `phone`, `whatsapp`, `email`, `address`, `category`, `availableCapacity`, `status`, `source` (`ADMIN`/`PUBLIC`), `notes`, `applicationTokenHash`/`applicationTokenExpiresAt` (token temporário das fotos de candidatura).
 - **RoomType:** `name`, `quantity`, `bedsPerRoom`, `priceType` (`DIARIA`/`PESSOA`/`QUARTO`/`SEMANAL`/`MENSAL`), `price`.
 - **Proposal:** `amount`, `commission`, `totalAmount`, `commissionPercentage`, `numberOfGuests`, `numberOfDays`, `dailyRate`.
 - **Contract:** `accommodationAmount`, `commissionPercentage`, `commissionAmount`, `totalAmount`, `status`.

@@ -10,6 +10,8 @@ export type RequestStatus =
 
 export type PartnerStatus = "PENDING" | "ACTIVE" | "INACTIVE";
 
+export type PartnerSource = "ADMIN" | "PUBLIC";
+
 export type PartnerCategory = "HOTEL" | "POUSADA" | "ALOJAMENTO" | "APART_HOTEL" | "HOSTEL" | "CASA";
 
 export type NegotiationStatus =
@@ -100,6 +102,7 @@ export interface Partner {
   longitude?: number | null;
   availableCapacity: number;
   status: PartnerStatus;
+  source?: PartnerSource;
   notes?: string | null;
   createdAt: string;
   roomTypes?: RoomType[];
@@ -206,9 +209,18 @@ export interface DashboardStats {
   negotiatingRequests: number;
   activeContracts: number;
   partners: number;
+  pendingPartners: number;
   activeGuests: number;
   totalNegotiated: number;
   estimatedRevenue: number;
+}
+
+/** Resposta do cadastro público de parceiro (POST /api/partner-applications). */
+export interface PartnerApplicationResponse {
+  applicationId: string | null;
+  token: string | null;
+  expiresAt?: string;
+  message: string;
 }
 
 export interface AdminUser {

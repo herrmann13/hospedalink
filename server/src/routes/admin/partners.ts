@@ -142,7 +142,12 @@ router.patch("/:id", async (req, res) => {
     return;
   }
   const data: Record<string, unknown> = {};
-  if (parsed.data.status) data.status = parsed.data.status;
+  if (parsed.data.status) {
+    data.status = parsed.data.status;
+    // Aprovar ou recusar encerra o prazo de envio de fotos da candidatura.
+    data.applicationTokenHash = null;
+    data.applicationTokenExpiresAt = null;
+  }
   if (parsed.data.category) data.category = parsed.data.category;
   if (parsed.data.notes !== undefined) data.notes = parsed.data.notes;
   if (parsed.data.availableCapacity !== undefined)

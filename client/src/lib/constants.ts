@@ -103,6 +103,15 @@ export const BUDGET_RANGES = [
   "Ainda não definido",
 ];
 
+export const ROOM_OPTIONS = [
+  "Quarto individual",
+  "Quarto duplo",
+  "Quarto triplo",
+  "Quarto compartilhado",
+  "Alojamento",
+  "Suíte",
+];
+
 export const PRICE_TYPES = [
   { value: "DIARIA", label: "Diária" },
   { value: "PESSOA", label: "Por pessoa" },

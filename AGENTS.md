@@ -15,8 +15,10 @@ Fluxo do negócio: **empresa solicita → admin associa parceiros (negociações
 ## 2. Regras de produto (não quebre)
 
 ### Site público (sem login)
-- O visitante só pode: ver a landing, **navegar pelo catálogo de parceiros** (`/parceiros`, `/parceiros/:id`) e **solicitar hospedagem** (`/solicitar-hospedagem`).
-- **Não existe cadastro público de parceiros.** Não recrie `/seja-parceiro` nem `POST /api/partners`.
+- O visitante pode: ver a landing, **navegar pelo catálogo de parceiros** (`/parceiros`, `/parceiros/:id`), **solicitar hospedagem** (`/solicitar-hospedagem`) e **cadastrar o próprio estabelecimento** (`/seja-parceiro`).
+- **Cadastro público de parceiros** existe só em `/seja-parceiro` → `POST /api/partner-applications`. Toda candidatura nasce `PENDING` + `source = "PUBLIC"` e **só entra no catálogo depois que a equipe aprova** (ação Aprovar em `/admin/parceiros`). Não crie outro caminho público de cadastro nem exponha `POST /api/partners`.
+- O formulário público **não** aceita `status`, `notes` nem campos internos: o servidor força `PENDING` e ignora observações. Fotos de candidatura (PENDING) só são servidas para sessão admin.
+- Limites do cadastro público: 3 por hora por IP (`PARTNER_APPLICATION_RATE_MAX`), 30 por dia no total, honeypot no formulário e no máximo 5 fotos de 5 MB por candidatura, com token válido por 2 horas.
 - O catálogo mostra **apenas parceiros com status `ACTIVE`**. `PENDING` e `INACTIVE` respondem 404 no público.
 - O catálogo **nunca expõe** CNPJ, razão social, responsável, telefone, WhatsApp, e-mail, observações internas ou status. Use sempre `serializePublicPartner` (server/src/lib/serialize.ts). O contato passa pela Hospeda Link — expor contatos quebra o modelo de comissão.
 - Filtros do catálogo (e do admin): **categoria**, **busca**, **nº de pessoas** (`availableCapacity >= N`) e **comodidades** (o parceiro precisa ter *todas* as selecionadas). A lógica é compartilhada em `client/src/components/partners/PartnerFilters.tsx`; não duplique.
@@ -24,7 +26,7 @@ Fluxo do negócio: **empresa solicita → admin associa parceiros (negociações
 ### Painel administrativo
 - Acessível **somente digitando `/admin` na URL**. Nenhuma página pública pode ter link, botão ou menção ao admin.
 - Todas as rotas `/api/admin/*` usam `requireAuth` (cookie JWT). Toda rota admin nova deve usar o mesmo middleware.
-- Parceiros são cadastrados e editados **só pela equipe interna** (`/admin/parceiros/novo`, `/admin/parceiros/:id/editar`). Fotos são gerenciadas no detalhe do parceiro.
+- Parceiros são criados **pela equipe interna** (`/admin/parceiros/novo`) **ou por candidatura pública aprovada**; edição de dados é só pela equipe interna (`/admin/parceiros/:id/editar`). Fotos são gerenciadas no detalhe do parceiro.
 - Cada linha de `/admin/parceiros` tem um menu ⋮ (`RowActions`): Ver cadastro, Fotos, Editar, Aprovar (pendentes) e Excluir.
 - **Excluir parceiro** só é permitido sem negociações, propostas ou contratos vinculados (senão a API responde 409 e o caminho é marcar como `INACTIVE`). Nunca contorne isso apagando o histórico comercial.
 

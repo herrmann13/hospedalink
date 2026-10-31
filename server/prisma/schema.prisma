@@ -73,7 +73,13 @@ model Partner {
   longitude         Float?
   availableCapacity Int
   status            String           @default("PENDING")
+  // ADMIN (cadastro interno) | PUBLIC (candidatura enviada em /seja-parceiro)
+  source            String           @default("ADMIN")
   notes             String?
+  // Token temporário que autoriza o envio de fotos de uma candidatura pública.
+  // Guardamos apenas o hash (sha256); o valor em claro só existe no cliente.
+  applicationTokenHash      String?
+  applicationTokenExpiresAt DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   roomTypes         RoomType[]

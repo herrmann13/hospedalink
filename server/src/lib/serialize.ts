@@ -155,6 +155,7 @@ export function serializePartner(partner: PartnerFull) {
     longitude: partner.longitude,
     availableCapacity: partner.availableCapacity,
     status: partner.status,
+    source: partner.source,
     notes: partner.notes,
     createdAt: partner.createdAt.toISOString(),
     updatedAt: partner.updatedAt.toISOString(),

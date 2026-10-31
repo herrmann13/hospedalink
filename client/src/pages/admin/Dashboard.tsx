@@ -48,6 +48,20 @@ export function Dashboard() {
         description="Visão geral da operação de hospedagem corporativa."
       />
 
+      {stats && stats.pendingPartners > 0 && (
+        <Link
+          to="/admin/parceiros?status=PENDING"
+          className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-accent/30 bg-accent-soft px-5 py-4 text-sm font-medium text-accent-strong transition-colors hover:border-accent"
+        >
+          <span>
+            {stats.pendingPartners === 1
+              ? "1 cadastro de parceiro aguardando aprovação."
+              : `${stats.pendingPartners} cadastros de parceiros aguardando aprovação.`}
+          </span>
+          <span className="whitespace-nowrap">Revisar</span>
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {cards.map((card) => (
           <StatCard key={card.label} label={card.label} value={card.value} icon={card.icon} accent={card.accent} />

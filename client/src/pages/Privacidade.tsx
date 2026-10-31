@@ -16,10 +16,18 @@ export function Privacidade() {
           CNPJ, e-mail e telefone) e informações sobre a necessidade de
           hospedagem (período, quantidade de pessoas e preferências).
         </p>
+        <p>
+          No cadastro de parceiros, coletamos os dados do estabelecimento (razão
+          social, nome fantasia, CNPJ, endereço, categoria), os contatos do
+          responsável, as acomodações, comodidades, valores e as fotos enviadas.
+        </p>
         <h2 className="text-lg font-semibold text-ink">Uso das informações</h2>
         <p>
           As informações são utilizadas para analisar a demanda, consultar
           parceiros, negociar condições e entrar em contato com o solicitante.
+          No cadastro de parceiros, os dados são usados para avaliar o
+          estabelecimento, publicar o perfil no catálogo após aprovação e
+          viabilizar as negociações de hospedagem.
         </p>
         <h2 className="text-lg font-semibold text-ink">Compartilhamento</h2>
         <p>

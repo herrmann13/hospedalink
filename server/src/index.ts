@@ -13,6 +13,7 @@ const distPath = path.resolve(import.meta.dir, "../../client/dist");
 const publicRoutes = [
   /^\/$/,
   /^\/solicitar-hospedagem$/,
+  /^\/seja-parceiro$/,
   /^\/parceiros$/,
   /^\/parceiros\/[^/]+$/,
   /^\/privacidade$/,
@@ -20,7 +21,14 @@ const publicRoutes = [
 ];
 const adminRoutes = /^\/admin(?:\/.*)?$/;
 
-const publicPaths = ["/", "/parceiros", "/solicitar-hospedagem", "/privacidade", "/termos"];
+const publicPaths = [
+  "/",
+  "/parceiros",
+  "/solicitar-hospedagem",
+  "/seja-parceiro",
+  "/privacidade",
+  "/termos",
+];
 
 const configuredOrigin = (process.env.CLIENT_ORIGIN ?? "").split(",")[0]?.trim() ?? "";
 

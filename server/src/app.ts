@@ -45,8 +45,10 @@ export function createApp() {
   const app = express();
   const configuredOrigin = process.env.CLIENT_ORIGIN;
 
-  // O app roda atrás do proxy do Railway: confia no X-Forwarded-* para
-  // protocolo, IP e cookies seguros.
+  // O app roda atrás do edge do Railway: confia no X-Forwarded-* para protocolo
+  // e cookies seguros. Para identificar o cliente em rate limit usamos o header
+  // X-Real-IP (ver server/src/lib/rateLimit.ts), porque o número de saltos do
+  // X-Forwarded-For não é garantido.
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
   app.use(securityHeaders);

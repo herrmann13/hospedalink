@@ -96,6 +96,99 @@ paths:
         "400":
           description: Dados inválidos
 
+  /partner-applications:
+    post:
+      tags: [Público]
+      summary: Envia uma candidatura pública de parceiro
+      description: |
+        Cria o parceiro como PENDENTE com `source = PUBLIC`. O cadastro não aparece no
+        catálogo até a aprovação da equipe. Devolve um token temporário (2 horas) usado
+        no envio das fotos. Limite: 3 por hora por IP e 30 por dia no total.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerApplicationInput"
+      responses:
+        "201":
+          description: Candidatura criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applicationId:
+                    type: string
+                    nullable: true
+                    description: Nulo quando o honeypot é acionado (nada é gravado)
+                  token:
+                    type: string
+                    nullable: true
+                    description: Token para envio das fotos (válido por 2 horas)
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+        "400":
+          description: Dados inválidos
+        "409":
+          description: Já existe cadastro com este CNPJ
+        "429":
+          description: Limite de cadastros excedido
+
+  /partner-applications/{id}/images:
+    post:
+      tags: [Público]
+      summary: Envia uma foto da candidatura
+      description: Corpo binário (`image/jpeg`, `image/png` ou `image/webp`), máximo de 5 MB e 5 fotos por candidatura. Só aceita enquanto o cadastro está PENDENTE e o token é válido.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+        - name: X-Application-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Foto adicionada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      sortOrder:
+                        type: integer
+        "400":
+          description: Arquivo inválido ou limite de fotos atingido
+        "401":
+          description: Token ausente
+        "404":
+          description: Cadastro não encontrado, token inválido ou prazo expirado
+
   /partners:
     get:
       tags: [Público]
@@ -662,6 +755,8 @@ components:
           type: integer
         partners:
           type: integer
+        pendingPartners:
+          type: integer
         activeGuests:
           type: integer
         totalNegotiated:
@@ -873,6 +968,9 @@ components:
           type: integer
         status:
           $ref: "#/components/schemas/PartnerStatus"
+        source:
+          type: string
+          enum: [ADMIN, PUBLIC]
         services:
           type: array
           items:
@@ -883,6 +981,84 @@ components:
             $ref: "#/components/schemas/RoomType"
         notes:
           type: string
+
+    PartnerApplicationInput:
+      type: object
+      required:
+        - tradeName
+        - legalName
+        - cnpj
+        - contactName
+        - phone
+        - email
+        - address
+        - category
+        - availableCapacity
+        - roomTypes
+        - consent
+      properties:
+        tradeName:
+          type: string
+        legalName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        category:
+          $ref: "#/components/schemas/PartnerCategory"
+        availableCapacity:
+          type: integer
+          minimum: 1
+        roomTypes:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/RoomTypeInput"
+        services:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/RequirementType"
+        consent:
+          type: boolean
+          enum: [true]
+        website:
+          type: string
+          description: Honeypot — deve ficar vazio
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+        legalName:
+          type: string
+        tradeName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        contactRole:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     CompanySummary:
       type: object

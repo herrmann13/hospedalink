@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, Eye, Image, PencilSimple, Plus, SpinnerGap, Trash } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
@@ -39,7 +39,14 @@ export function Parceiros() {
   const [toDelete, setToDelete] = useState<Partner | null>(null);
 
   const filters = usePartnerFilters(data?.partners ?? [], adminSearchText);
-  const [status, setStatus] = useState<PartnerStatus | "">("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get("status");
+  // A URL é a fonte da verdade do filtro: mantém voltar/avançar do navegador e o
+  // link "aguardando aprovação" do dashboard em sincronia.
+  const status: PartnerStatus | "" =
+    statusParam && STATUSES.includes(statusParam as PartnerStatus) ? (statusParam as PartnerStatus) : "";
+  const setStatus = (value: PartnerStatus | "") =>
+    setSearchParams(value ? { status: value } : {}, { replace: true });
   const partners = filters.filtered.filter((p) => !status || p.status === status);
   const selectedServices = filters.services;
 

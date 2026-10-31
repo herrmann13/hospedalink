@@ -15,6 +15,7 @@ const columns = [
     links: [
       { label: "Solicitar hospedagem", href: "/solicitar-hospedagem" },
       { label: "Ver parceiros", href: "/parceiros" },
+      { label: "Cadastrar meu estabelecimento", href: "/seja-parceiro" },
     ],
   },
   {

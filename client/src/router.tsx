@@ -10,6 +10,7 @@ const AdminLayout = lazy(() =>
 const SolicitarHospedagem = lazy(() =>
   import("./pages/SolicitarHospedagem").then((m) => ({ default: m.SolicitarHospedagem })),
 );
+const SejaParceiro = lazy(() => import("./pages/SejaParceiro").then((m) => ({ default: m.SejaParceiro })));
 const CatalogoParceiros = lazy(() =>
   import("./pages/CatalogoParceiros").then((m) => ({ default: m.CatalogoParceiros })),
 );
@@ -63,6 +64,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/solicitar-hospedagem", element: wrap(<SolicitarHospedagem />) },
+      { path: "/seja-parceiro", element: wrap(<SejaParceiro />) },
       { path: "/parceiros", element: wrap(<CatalogoParceiros />) },
       { path: "/parceiros/:id", element: wrap(<ParceiroPublico />) },
       { path: "/privacidade", element: wrap(<Privacidade />) },

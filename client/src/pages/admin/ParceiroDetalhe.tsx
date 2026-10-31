@@ -87,6 +87,7 @@ export function ParceiroDetalhe() {
             ) : (
               <Badge tone={partnerTone(partner.status)}>{PARTNER_STATUS_LABEL[partner.status]}</Badge>
             )}
+            {partner.source === "PUBLIC" && <Badge tone="info">Cadastro público</Badge>}
             <LinkButton to={`/admin/parceiros/${partner.id}/editar`} variant="outline">
               <PencilSimple size={16} />
               Editar

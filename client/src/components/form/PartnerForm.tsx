@@ -13,20 +13,12 @@ import {
   PARTNER_CATEGORY_LABEL,
   PARTNER_STATUS_LABEL,
   PRICE_TYPES,
+  ROOM_OPTIONS,
   SERVICES,
 } from "@/lib/constants";
 import type { Partner, PartnerStatus } from "@/lib/types";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
-
-const ROOM_OPTIONS = [
-  "Quarto individual",
-  "Quarto duplo",
-  "Quarto triplo",
-  "Quarto compartilhado",
-  "Alojamento",
-  "Suíte",
-];
 
 const STATUSES = Object.keys(PARTNER_STATUS_LABEL) as PartnerStatus[];
 

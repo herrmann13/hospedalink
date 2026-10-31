@@ -11,6 +11,7 @@ router.get("/", async (_req, res) => {
     negotiatingRequests,
     activeContracts,
     partners,
+    pendingPartners,
     contractsAgg,
   ] = await Promise.all([
     prisma.accommodationRequest.count({
@@ -21,6 +22,7 @@ router.get("/", async (_req, res) => {
     }),
     prisma.contract.count({ where: { status: "ATIVO" } }),
     prisma.partner.count({ where: { status: "ACTIVE" } }),
+    prisma.partner.count({ where: { status: "PENDING" } }),
     prisma.contract.aggregate({
       where: { status: { in: ["ATIVO", "FINALIZADO"] } },
       _sum: { totalAmount: true, commissionAmount: true, numberOfGuests: true },
@@ -33,6 +35,7 @@ router.get("/", async (_req, res) => {
       negotiatingRequests,
       activeContracts,
       partners,
+      pendingPartners,
       activeGuests: contractsAgg._sum.numberOfGuests ?? 0,
       totalNegotiated: contractsAgg._sum.totalAmount ?? 0,
       estimatedRevenue: contractsAgg._sum.commissionAmount ?? 0,
